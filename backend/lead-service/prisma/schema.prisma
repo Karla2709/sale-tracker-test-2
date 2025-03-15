@@ -1,0 +1,53 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum LeadStatus {
+  New
+  InContact
+  Interested
+  Closed
+  NotInterested
+}
+
+enum FocusDomain {
+  ContainerShipping
+  DropShipping
+  Ecommerce
+}
+
+enum ContactPlatform {
+  LinkedIn
+  Email
+  Referral
+  Conference
+  Other
+}
+
+model Lead {
+  id                  String          @id @default(uuid())
+  clientName          String
+  companyName         String
+  primaryContactPerson String
+  status              LeadStatus      @default(New)
+  focusDomain         FocusDomain
+  potentialValue      String
+  email               String
+  contactPlatform     ContactPlatform
+  location            String
+  notes               String?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  @@index([status])
+  @@index([focusDomain])
+  @@index([contactPlatform])
+} 

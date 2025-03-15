@@ -1,0 +1,30 @@
+{
+  "name": "sale-tracker-mvp",
+  "version": "1.0.0",
+  "description": "Sales Tracker MVP with Supabase integration",
+  "main": "index.js",
+  "scripts": {
+    "frontend": "cd frontend && npm run dev",
+    "backend": "cd backend && npm run dev",
+    "dev": "concurrently \"npm run frontend\" \"npm run backend\"",
+    "install-all": "npm install && cd frontend && npm install && cd ../backend && npm install",
+    "init-db": "cd backend && npm run init-db",
+    "seed-db": "cd backend && npm run seed-db",
+    "export-sql": "cd backend && npm run export-sql",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "sales",
+    "tracking",
+    "CRM",
+    "IT",
+    "consulting"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "concurrently": "^8.2.2",
+    "dotenv": "^16.4.7"
+  }
+}

@@ -8,6 +8,7 @@ import {
   UserOutlined,
   DashboardOutlined,
   SettingOutlined,
+  CheckSquareOutlined,
 } from '@ant-design/icons'
 import Link from 'next/link'
 
@@ -50,6 +51,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             },
             {
               key: '3',
+              icon: <CheckSquareOutlined />,
+              label: <Link href="/tasks">Tasks</Link>,
+            },
+            {
+              key: '4',
               icon: <SettingOutlined />,
               label: <Link href="/dashboard/settings">Settings</Link>,
             },

@@ -23,9 +23,30 @@ A SaaS tool for tracking potential clients in the IT consulting sector, focusing
 
 - Node.js (v16+)
 - npm or yarn
-- Supabase account
+- Docker (for local Supabase)
 
 ### Setting Up Supabase
+
+#### Option 1: Local Development with Supabase CLI (Recommended)
+
+1. Start the local Supabase services:
+
+```bash
+npx supabase start
+```
+
+2. This will provide you with local URLs and keys for Supabase services:
+   - API URL: http://127.0.0.1:54321
+   - Studio URL: http://127.0.0.1:54323
+   - Anon Key and Service Role Key will be displayed in the terminal
+
+3. Apply the database migrations and seed data:
+
+```bash
+npx supabase db reset
+```
+
+#### Option 2: Using Supabase Cloud
 
 1. Create a Supabase account at [supabase.com](https://supabase.com)
 2. Create a new project
@@ -35,55 +56,30 @@ A SaaS tool for tracking potential clients in the IT consulting sector, focusing
 
 ### Environment Setup
 
-1. Create a `.env` file in the `backend` directory:
+1. Create a `.env` file in the `backend` directory (or copy from `.env.example`):
 
 ```
-# Supabase Connection
-SUPABASE_URL=https://your-project-url.supabase.co
-SUPABASE_ANON_KEY=your-supabase-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
-
-# Server Configuration
+# Server configuration
 PORT=3001
+
+# Supabase configuration
+SUPABASE_URL=http://127.0.0.1:54321
+SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# Other configuration
 NODE_ENV=development
 ```
 
-2. Create a `.env.local` file in the `frontend` directory:
+2. Create a `.env.local` file in the `frontend` directory (or copy from `.env.example`):
 
 ```
 # Supabase Connection
-NEXT_PUBLIC_SUPABASE_URL=https://your-project-url.supabase.co
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 
 # API Configuration
 NEXT_PUBLIC_API_URL=http://localhost:3001
-```
-
-### Database Initialization
-
-#### Option 1: Using the Supabase SQL Editor (Recommended)
-
-1. Generate the SQL scripts for manual execution:
-
-```bash
-npm run export-sql
-```
-
-2. Copy the contents of `backend/src/db/combined-sql.sql` and paste it into the Supabase SQL Editor
-3. Execute the SQL to set up your database schema and seed data
-
-#### Option 2: Using the API (Requires proper configuration)
-
-1. Run the database initialization script to set up the schema:
-
-```bash
-npm run init-db
-```
-
-2. Seed the database with sample data:
-
-```bash
-npm run seed-db
 ```
 
 ### Installation
@@ -130,6 +126,11 @@ sales-tracker-mvp/
 │   │   └── styles/         # CSS styles
 │   └── package.json
 │
+├── supabase/               # Supabase configuration
+│   ├── migrations/         # Database migrations
+│   ├── seed.sql            # Seed data
+│   └── config.toml         # Supabase configuration
+│
 └── package.json            # Root package.json for running both services
 ```
 
@@ -137,7 +138,6 @@ sales-tracker-mvp/
 
 The database schema includes the following tables:
 
-- `users`: User profiles linked to Supabase Auth
 - `companies`: Companies/organizations
 - `leads`: Potential client contacts
 - `interactions`: Communication history with leads

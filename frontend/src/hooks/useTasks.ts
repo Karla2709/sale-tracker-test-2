@@ -3,36 +3,87 @@ import { supabase } from '../lib/supabase';
 import { Task, CreateTaskInput, UpdateTaskInput, TaskWithLead } from '../lib/types/task';
 import { useSupabaseQuery } from './useSupabase';
 
+// Mock data for tasks
+const MOCK_TASKS: Task[] = [
+  {
+    id: '1',
+    title: 'Follow up with client',
+    description: 'Send email about proposal',
+    status: 'pending',
+    priority: 'high',
+    due_date: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    lead_id: '1',
+    user_id: '1'
+  },
+  {
+    id: '2',
+    title: 'Prepare presentation',
+    description: 'Create slides for next meeting',
+    status: 'in_progress',
+    priority: 'medium',
+    due_date: new Date(Date.now() + 86400000).toISOString(), // tomorrow
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    lead_id: '2',
+    user_id: '1'
+  },
+  {
+    id: '3',
+    title: 'Send contract',
+    description: 'Email final contract for signature',
+    status: 'completed',
+    priority: 'high',
+    due_date: new Date(Date.now() - 86400000).toISOString(), // yesterday
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    lead_id: '3',
+    user_id: '1'
+  }
+];
+
 /**
  * Hook for fetching all tasks
  */
 export function useTasks() {
-  return useSupabaseQuery<Task[]>('tasks', {
-    select: '*, lead:leads(name, email)',
-    order: { column: 'due_date', ascending: true }
-  });
+  // Return mock data immediately
+  return {
+    data: MOCK_TASKS,
+    loading: false,
+    error: null,
+    refetch: () => {}
+  };
 }
 
 /**
  * Hook for fetching tasks for a specific lead
  */
 export function useLeadTasks(leadId: string) {
-  return useSupabaseQuery<Task[]>('tasks', {
-    select: '*',
-    match: { lead_id: leadId },
-    order: { column: 'due_date', ascending: true }
-  });
+  const [data, setData] = useState<Task[]>(MOCK_TASKS.filter(task => task.lead_id === leadId));
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const refetch = () => {
+    setData(MOCK_TASKS.filter(task => task.lead_id === leadId));
+  };
+
+  return { data, loading, error, refetch };
 }
 
 /**
  * Hook for fetching tasks with a specific status
  */
 export function useTasksByStatus(status: string) {
-  return useSupabaseQuery<Task[]>('tasks', {
-    select: '*, lead:leads(name, email)',
-    match: { status },
-    order: { column: 'due_date', ascending: true }
-  });
+  const [data, setData] = useState<Task[]>(MOCK_TASKS.filter(task => task.status === status));
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const refetch = () => {
+    setData(MOCK_TASKS.filter(task => task.status === status));
+  };
+
+  return { data, loading, error, refetch };
 }
 
 /**
@@ -47,15 +98,18 @@ export function useTaskActions() {
       setLoading(true);
       setError(null);
       
-      const { data, error: createError } = await supabase
-        .from('tasks')
-        .insert(taskData)
-        .select()
-        .single();
+      // Mock creating a task
+      const newTask: Task = {
+        id: Math.random().toString(36).substring(2, 9),
+        ...taskData,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      } as Task;
       
-      if (createError) throw createError;
+      // In a real app, this would be added to the database
+      MOCK_TASKS.push(newTask);
       
-      return data as Task;
+      return newTask;
     } catch (err) {
       setError(err instanceof Error ? err : new Error(String(err)));
       return null;
@@ -69,16 +123,20 @@ export function useTaskActions() {
       setLoading(true);
       setError(null);
       
-      const { data, error: updateError } = await supabase
-        .from('tasks')
-        .update(taskData)
-        .eq('id', taskId)
-        .select()
-        .single();
+      // Find the task to update
+      const taskIndex = MOCK_TASKS.findIndex(task => task.id === taskId);
+      if (taskIndex === -1) throw new Error('Task not found');
       
-      if (updateError) throw updateError;
+      // Update the task
+      const updatedTask: Task = {
+        ...MOCK_TASKS[taskIndex],
+        ...taskData,
+        updated_at: new Date().toISOString()
+      };
       
-      return data as Task;
+      MOCK_TASKS[taskIndex] = updatedTask;
+      
+      return updatedTask;
     } catch (err) {
       setError(err instanceof Error ? err : new Error(String(err)));
       return null;
@@ -92,12 +150,12 @@ export function useTaskActions() {
       setLoading(true);
       setError(null);
       
-      const { error: deleteError } = await supabase
-        .from('tasks')
-        .delete()
-        .eq('id', taskId);
+      // Find the task index
+      const taskIndex = MOCK_TASKS.findIndex(task => task.id === taskId);
+      if (taskIndex === -1) throw new Error('Task not found');
       
-      if (deleteError) throw deleteError;
+      // Remove the task
+      MOCK_TASKS.splice(taskIndex, 1);
       
       return true;
     } catch (err) {
@@ -122,15 +180,12 @@ export function useTaskActions() {
  */
 export function useTasksSubscription(callback: () => void) {
   useEffect(() => {
-    const subscription = supabase
-      .channel('tasks-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => {
-        callback();
-      })
-      .subscribe();
-
+    // In a real app, this would set up a subscription
+    // For mock purposes, we'll just call the callback once
+    callback();
+    
     return () => {
-      supabase.removeChannel(subscription);
+      // Cleanup would happen here
     };
   }, [callback]);
 } 

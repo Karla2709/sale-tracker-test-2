@@ -66,6 +66,12 @@
   to = "/.netlify/functions/tasks/:splat"
   status = 200
 
+# Add fallback for Next.js routes
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
 # Required for Next.js on Netlify
 [[plugins]]
   package = "@netlify/plugin-nextjs" 

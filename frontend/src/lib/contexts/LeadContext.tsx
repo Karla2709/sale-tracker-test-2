@@ -3,63 +3,19 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { Lead, LeadFilter } from '../types/lead'
 
-// Mock data for initial development
-const mockLeads: Lead[] = [
-  {
-    id: '1',
-    clientName: 'John Doe',
-    companyName: 'Shipping Express',
-    primaryContactPerson: 'John Doe',
-    status: 'New',
-    focusDomain: 'Container Shipping',
-    potentialValue: 'High value client with global operations',
-    email: 'john.doe@shippingexpress.com',
-    contactPlatform: 'LinkedIn',
-    location: 'Singapore',
-    notes: 'Met at the Shipping Conference 2023',
-    createdAt: new Date('2023-01-15'),
-    updatedAt: new Date('2023-01-15'),
-  },
-  {
-    id: '2',
-    clientName: 'Jane Smith',
-    companyName: 'Global Dropship',
-    primaryContactPerson: 'Jane Smith',
-    status: 'In Contact',
-    focusDomain: 'Drop Shipping',
-    potentialValue: 'Medium-sized operation looking to expand',
-    email: 'jane.smith@globaldropship.com',
-    contactPlatform: 'Email',
-    location: 'United States',
-    notes: 'Referred by existing client',
-    createdAt: new Date('2023-02-10'),
-    updatedAt: new Date('2023-02-20'),
-  },
-  {
-    id: '3',
-    clientName: 'Mike Johnson',
-    companyName: 'E-Shop Solutions',
-    primaryContactPerson: 'Mike Johnson',
-    status: 'Interested',
-    focusDomain: 'Ecommerce',
-    potentialValue: 'Fast-growing startup with VC funding',
-    email: 'mike.johnson@eshopsolutions.com',
-    contactPlatform: 'Conference',
-    location: 'Germany',
-    notes: 'Interested in our logistics optimization solution',
-    createdAt: new Date('2023-03-05'),
-    updatedAt: new Date('2023-03-15'),
-  },
-]
+// Define API base URL from environment variable
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 interface LeadContextType {
   leads: Lead[]
   filteredLeads: Lead[]
   filter: LeadFilter
   setFilter: (filter: LeadFilter) => void
-  addLead: (lead: Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>) => void
-  updateLead: (id: string, lead: Partial<Lead>) => void
-  deleteLead: (id: string) => void
+  addLead: (lead: Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>
+  updateLead: (id: string, lead: Partial<Lead>) => Promise<void>
+  deleteLead: (id: string) => Promise<void>
+  loading: boolean
+  error: string | null
 }
 
 const LeadContext = createContext<LeadContextType | undefined>(undefined)
@@ -76,10 +32,70 @@ interface LeadProviderProps {
   children: ReactNode
 }
 
+// Helper function to format API data to match our Lead type
+const formatApiLead = (apiLead: any): Lead => {
+  return {
+    id: apiLead.id,
+    clientName: apiLead.name || '',
+    companyName: apiLead.company ? apiLead.company.name || '' : '',
+    primaryContactPerson: apiLead.name || '',
+    status: apiLead.status || 'New',
+    focusDomain: apiLead.company ? apiLead.company.industry || 'Ecommerce' : 'Ecommerce',
+    potentialValue: apiLead.potential_value || '',
+    email: apiLead.email || '',
+    contactPlatform: apiLead.contact_platform || 'Email',
+    location: apiLead.location || '',
+    notes: apiLead.notes || '',
+    createdAt: new Date(apiLead.created_at),
+    updatedAt: new Date(apiLead.updated_at),
+  }
+}
+
+// Helper function to convert our Lead type to API format
+const convertToApiFormat = (lead: Partial<Lead>): any => {
+  return {
+    name: lead.clientName,
+    email: lead.email,
+    status: lead.status,
+    notes: lead.notes,
+    location: lead.location,
+    potential_value: lead.potentialValue,
+    contact_platform: lead.contactPlatform
+  }
+}
+
 export const LeadProvider = ({ children }: LeadProviderProps) => {
-  const [leads, setLeads] = useState<Lead[]>(mockLeads)
+  const [leads, setLeads] = useState<Lead[]>([])
   const [filter, setFilter] = useState<LeadFilter>({})
-  const [filteredLeads, setFilteredLeads] = useState<Lead[]>(leads)
+  const [filteredLeads, setFilteredLeads] = useState<Lead[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Fetch leads from API on mount
+  useEffect(() => {
+    const fetchLeads = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const response = await fetch(`${API_URL}/api/leads`)
+        
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`)
+        }
+        
+        const apiLeads = await response.json()
+        const formattedLeads = apiLeads.map(formatApiLead)
+        setLeads(formattedLeads)
+      } catch (err) {
+        console.error('Error fetching leads:', err)
+        setError(err instanceof Error ? err.message : 'Failed to fetch leads')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchLeads()
+  }, [])
 
   // Apply filters whenever leads or filter changes
   useEffect(() => {
@@ -92,7 +108,7 @@ export const LeadProvider = ({ children }: LeadProviderProps) => {
           lead.clientName.toLowerCase().includes(searchLower) ||
           lead.companyName.toLowerCase().includes(searchLower) ||
           lead.primaryContactPerson.toLowerCase().includes(searchLower) ||
-          lead.location.toLowerCase().includes(searchLower)
+          (lead.location && lead.location.toLowerCase().includes(searchLower))
       )
     }
 
@@ -110,34 +126,102 @@ export const LeadProvider = ({ children }: LeadProviderProps) => {
 
     if (filter.location) {
       const locationLower = filter.location.toLowerCase()
-      result = result.filter((lead) => lead.location.toLowerCase().includes(locationLower))
+      result = result.filter((lead) => lead.location && lead.location.toLowerCase().includes(locationLower))
     }
 
     setFilteredLeads(result)
   }, [leads, filter])
 
-  const addLead = (lead: Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const newLead: Lead = {
-      ...lead,
-      id: Date.now().toString(), // Simple ID generation for mock data
-      createdAt: new Date(),
-      updatedAt: new Date(),
+  const addLead = async (lead: Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      const apiLead = convertToApiFormat(lead)
+      const response = await fetch(`${API_URL}/api/leads`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(apiLead),
+      })
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`)
+      }
+      
+      const newApiLead = await response.json()
+      const formattedLead = formatApiLead(newApiLead)
+      
+      // Update local state with the new lead from the API
+      setLeads((prevLeads) => [...prevLeads, formattedLead])
+    } catch (err) {
+      console.error('Error adding lead:', err)
+      setError(err instanceof Error ? err.message : 'Failed to add lead')
+      throw err // Rethrow to allow handling in the UI
+    } finally {
+      setLoading(false)
     }
-    setLeads((prevLeads) => [...prevLeads, newLead])
   }
 
-  const updateLead = (id: string, updatedFields: Partial<Lead>) => {
-    setLeads((prevLeads) =>
-      prevLeads.map((lead) =>
-        lead.id === id
-          ? { ...lead, ...updatedFields, updatedAt: new Date() }
-          : lead
+  const updateLead = async (id: string, updatedFields: Partial<Lead>) => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      const apiLead = convertToApiFormat(updatedFields)
+      const response = await fetch(`${API_URL}/api/leads/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(apiLead),
+      })
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`)
+      }
+      
+      const updatedApiLead = await response.json()
+      const formattedLead = formatApiLead(updatedApiLead)
+      
+      // Update the local state with the response from the API
+      setLeads((prevLeads) =>
+        prevLeads.map((lead) =>
+          lead.id === id ? { ...lead, ...formattedLead } : lead
+        )
       )
-    )
+    } catch (err) {
+      console.error('Error updating lead:', err)
+      setError(err instanceof Error ? err.message : 'Failed to update lead')
+      throw err // Rethrow to allow handling in the UI
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const deleteLead = (id: string) => {
-    setLeads((prevLeads) => prevLeads.filter((lead) => lead.id !== id))
+  const deleteLead = async (id: string) => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      const response = await fetch(`${API_URL}/api/leads/${id}`, {
+        method: 'DELETE',
+      })
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`)
+      }
+      
+      // Remove the lead from local state after successful API call
+      setLeads((prevLeads) => prevLeads.filter((lead) => lead.id !== id))
+    } catch (err) {
+      console.error('Error deleting lead:', err)
+      setError(err instanceof Error ? err.message : 'Failed to delete lead')
+      throw err // Rethrow to allow handling in the UI
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -150,6 +234,8 @@ export const LeadProvider = ({ children }: LeadProviderProps) => {
         addLead,
         updateLead,
         deleteLead,
+        loading,
+        error
       }}
     >
       {children}

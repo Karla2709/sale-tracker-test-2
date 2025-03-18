@@ -11,11 +11,12 @@ const { TextArea } = Input
 const { Title } = Typography
 
 const LeadTable = () => {
-  const { filteredLeads, addLead, updateLead, deleteLead } = useLeads()
+  const { filteredLeads, addLead, updateLead, deleteLead, loading, error } = useLeads()
   const [isModalVisible, setIsModalVisible] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
   const [currentLead, setCurrentLead] = useState<Lead | null>(null)
   const [form] = Form.useForm()
+  const [formSubmitting, setFormSubmitting] = useState(false)
 
   const showAddModal = () => {
     setIsEditMode(false)
@@ -35,27 +36,37 @@ const LeadTable = () => {
     setIsModalVisible(false)
   }
 
-  const handleSubmit = () => {
-    form.validateFields().then((values) => {
+  const handleSubmit = async () => {
+    try {
+      setFormSubmitting(true)
+      await form.validateFields()
+      const values = form.getFieldsValue()
+      
       if (isEditMode && currentLead) {
-        updateLead(currentLead.id, values)
+        await updateLead(currentLead.id, values)
       } else {
-        addLead(values)
+        await addLead(values)
       }
+      
       setIsModalVisible(false)
       form.resetFields()
-    })
+    } catch (err) {
+      // Form validation error or API error
+      console.error('Error submitting form:', err)
+    } finally {
+      setFormSubmitting(false)
+    }
   }
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     Modal.confirm({
       title: 'Are you sure you want to delete this lead?',
       content: 'This action cannot be undone.',
       okText: 'Yes, Delete',
       okType: 'danger',
       cancelText: 'Cancel',
-      onOk() {
-        deleteLead(id)
+      onOk: async () => {
+        await deleteLead(id)
       },
     })
   }
@@ -145,10 +156,17 @@ const LeadTable = () => {
         </Button>
       </div>
 
+      {error && (
+        <div className="mb-4 p-4 bg-red-50 text-red-700 rounded">
+          Error: {error}
+        </div>
+      )}
+
       <Table 
         columns={columns} 
         dataSource={filteredLeads} 
         rowKey="id"
+        loading={loading}
         expandable={{
           expandedRowRender: (record) => (
             <div className="p-4">
@@ -178,7 +196,7 @@ const LeadTable = () => {
           <Button key="cancel" onClick={handleCancel}>
             Cancel
           </Button>,
-          <Button key="submit" type="primary" onClick={handleSubmit}>
+          <Button key="submit" type="primary" onClick={handleSubmit} loading={formSubmitting}>
             {isEditMode ? 'Update' : 'Add'}
           </Button>,
         ]}

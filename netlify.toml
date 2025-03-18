@@ -6,6 +6,10 @@
 [build.environment]
   NEXT_TELEMETRY_DISABLED = "1"
 
+[functions]
+  directory = "../netlify/functions"
+  node_bundler = "esbuild"
+
 # Uncommented the redirects for Netlify Functions
 [[redirects]]
   from = "/api/health"

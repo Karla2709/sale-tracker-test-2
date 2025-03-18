@@ -6,14 +6,12 @@
 [build.environment]
   NEXT_TELEMETRY_DISABLED = "1"
 
+# Required for Next.js on Netlify
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
 # Uncomment this if you want to use Netlify Functions for your backend
 # [[redirects]]
 #   from = "/api/*"
 #   to = "/.netlify/functions/:splat"
-#   status = 200
-
-# Add redirects for Next.js routing
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200 
+#   status = 200 

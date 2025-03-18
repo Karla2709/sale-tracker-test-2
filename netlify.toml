@@ -6,12 +6,62 @@
 [build.environment]
   NEXT_TELEMETRY_DISABLED = "1"
 
+# Uncommented the redirects for Netlify Functions
+[[redirects]]
+  from = "/api/health"
+  to = "/.netlify/functions/health"
+  status = 200
+
+[[redirects]]
+  from = "/api/leads"
+  to = "/.netlify/functions/leads"
+  status = 200
+
+[[redirects]]
+  from = "/api/leads/*"
+  to = "/.netlify/functions/leads/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/api/companies"
+  to = "/.netlify/functions/companies"
+  status = 200
+
+[[redirects]]
+  from = "/api/companies/*"
+  to = "/.netlify/functions/companies/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/api/interactions"
+  to = "/.netlify/functions/interactions"
+  status = 200
+
+[[redirects]]
+  from = "/api/interactions/*"
+  to = "/.netlify/functions/interactions/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/api/deals"
+  to = "/.netlify/functions/deals"
+  status = 200
+
+[[redirects]]
+  from = "/api/deals/*"
+  to = "/.netlify/functions/deals/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/api/tasks"
+  to = "/.netlify/functions/tasks"
+  status = 200
+
+[[redirects]]
+  from = "/api/tasks/*"
+  to = "/.netlify/functions/tasks/:splat"
+  status = 200
+
 # Required for Next.js on Netlify
 [[plugins]]
-  package = "@netlify/plugin-nextjs"
-
-# Uncomment this if you want to use Netlify Functions for your backend
-# [[redirects]]
-#   from = "/api/*"
-#   to = "/.netlify/functions/:splat"
-#   status = 200 
+  package = "@netlify/plugin-nextjs" 

@@ -16,6 +16,27 @@ A SaaS tool for tracking potential clients in the IT consulting sector, focusing
 - **Backend**: Node.js, Express, TypeScript
 - **Database**: PostgreSQL (via Supabase)
 - **Authentication**: Supabase Auth
+- **Deployment**: Netlify with Serverless Functions
+
+## Deployment Options
+
+This application supports multiple deployment options:
+
+### Option 1: Separate Frontend and Backend
+
+Deploy the Next.js frontend on Netlify and the Express backend on a separate service like Render, Railway, or Heroku.
+
+### Option 2: Netlify Functions (Serverless)
+
+Deploy both frontend and backend on Netlify, using Netlify Functions for the backend API. This is the recommended approach for simplicity and cost-effectiveness.
+
+The project includes serverless functions in the `netlify/functions` directory that replace the Express backend. These functions are automatically deployed when you deploy to Netlify.
+
+### Option 3: Supabase Functions
+
+For simple operations, you can use Supabase's Edge Functions to handle backend logic directly in the database.
+
+For detailed deployment instructions, see the [NETLIFY_DEPLOYMENT.md](./NETLIFY_DEPLOYMENT.md) guide.
 
 ## Getting Started
 

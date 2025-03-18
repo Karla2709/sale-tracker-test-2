@@ -64,3 +64,6 @@ next-env.d.ts
 
 # Prisma
 prisma/migrations sale-tracker-mvp/
+
+# Local Netlify folder
+.netlify

@@ -144,6 +144,61 @@ The database schema includes the following tables:
 - `deals`: Sales opportunities and their status
 - `tasks`: Tasks related to leads
 
+## Database Migration
+
+### Setting Up Cloud Database
+
+Follow these steps to link your local Supabase instance to a cloud project and push your local database schema and data to the cloud:
+
+1. Log in to Supabase CLI:
+
+```bash
+npx supabase login
+```
+
+2. List your available Supabase projects:
+
+```bash
+npx supabase projects list
+```
+
+3. Link your local instance to a cloud project:
+
+```bash
+npx supabase link --project-ref your-project-ref-id
+```
+
+4. Create a new migration file:
+
+```bash
+npx supabase migration new my_migration_name
+```
+
+5. Edit the migration file (located in `supabase/migrations/`) to include your schema and seed data with proper IF NOT EXISTS clauses to handle conflicts
+
+6. Push the migrations to the cloud database:
+
+```bash
+npx supabase db push
+```
+
+### Environment Configuration
+
+Two environment files control where your application connects:
+
+- `.env.local`: For local development (points to local Supabase)
+- `.env.production`: For production/cloud environment (points to cloud Supabase)
+
+To switch between environments:
+
+```bash
+# For local development
+cp .env.local .env
+
+# For production
+cp .env.production .env
+```
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details. 

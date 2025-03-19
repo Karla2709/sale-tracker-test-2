@@ -18,6 +18,11 @@ A SaaS tool for tracking potential clients in the IT consulting sector, focusing
 - **Authentication**: Supabase Auth
 - **Deployment**: Netlify with Serverless Functions
 
+## Live Demo
+
+A live version of the application is available at:
+- [https://sale-tracker-mvp.netlify.app](https://sale-tracker-mvp.netlify.app)
+
 ## Deployment Options
 
 This application supports multiple deployment options:
@@ -103,6 +108,15 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 NEXT_PUBLIC_API_URL=http://localhost:3001
 ```
 
+### Important Note About Supabase Authentication
+
+When using the Express backend or Netlify Functions, you must use the Supabase Service Role Key to bypass Row Level Security (RLS) policies. This is configured in:
+
+- `backend/src/config/supabase.ts` for the Express backend
+- `netlify/functions/utils/supabase.ts` for Netlify Functions
+
+The frontend should continue to use the Anon Key for client-side operations.
+
 ### Installation
 
 1. Install all dependencies:
@@ -147,6 +161,10 @@ sales-tracker-mvp/
 │   │   └── styles/         # CSS styles
 │   └── package.json
 │
+├── netlify/                # Netlify Functions (serverless backend)
+│   ├── functions/          # Serverless function handlers
+│   │   └── utils/          # Shared utilities for functions
+│
 ├── supabase/               # Supabase configuration
 │   ├── migrations/         # Database migrations
 │   ├── seed.sql            # Seed data
@@ -160,10 +178,30 @@ sales-tracker-mvp/
 The database schema includes the following tables:
 
 - `companies`: Companies/organizations
-- `leads`: Potential client contacts
+- `leads`: Potential client contacts (including fields for notes, location, potential_value, and contact_platform)
 - `interactions`: Communication history with leads
 - `deals`: Sales opportunities and their status
 - `tasks`: Tasks related to leads
+
+## Recent Updates
+
+### Lead Management Enhancements
+
+The lead management functionality has been updated to:
+- Connect directly to the Supabase backend via REST API
+- Support proper error handling and loading states
+- Ensure all CRUD operations (Create, Read, Update, Delete) work correctly
+- Handle the full lead data model with additional fields
+
+### Database Schema Updates
+
+The database schema has been enhanced with additional fields for the leads table:
+- `notes`: Text field for additional notes about the lead
+- `location`: Geographic location of the lead
+- `potential_value`: Estimated potential value of this lead
+- `contact_platform`: Platform used to contact this lead (LinkedIn, Email, etc.)
+
+These fields are added automatically via migrations when running `npx supabase db reset`.
 
 ## Database Migration
 

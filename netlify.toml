@@ -1,16 +1,18 @@
 [build]
   base = "frontend"
-  command = "npm run build"
+  command = "npm install @netlify/plugin-nextjs@4.42.2 && npm run build"
   publish = ".next"
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF frontend/"
 
 [build.environment]
   NEXT_TELEMETRY_DISABLED = "1"
+  NEXT_USE_NETLIFY_EDGE = "true"
 
 [functions]
   directory = "../netlify/functions"
   node_bundler = "esbuild"
 
-# Uncommented the redirects for Netlify Functions
+# API function redirects
 [[redirects]]
   from = "/api/health"
   to = "/.netlify/functions/health"
@@ -66,12 +68,6 @@
   to = "/.netlify/functions/tasks/:splat"
   status = 200
 
-# Add fallback for Next.js routes
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-
-# Required for Next.js on Netlify
+# NextJS redirects (Must be last)
 [[plugins]]
   package = "@netlify/plugin-nextjs" 

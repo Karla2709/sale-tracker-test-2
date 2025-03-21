@@ -21,19 +21,28 @@ A SaaS tool for tracking potential clients in the IT consulting sector, focusing
 ## Live Demo
 
 A live version of the application is available at:
-- [https://sale-tracker-mvp.netlify.app](https://sale-tracker-mvp.netlify.app)
+- Frontend: [https://sale-tracker-mvp.netlify.app](https://sale-tracker-mvp.netlify.app)
+- Backend API: [https://sale-tracker-mvp-backend.vercel.app](https://sale-tracker-mvp-backend.vercel.app)
 
 ## Deployment Options
 
 This application supports multiple deployment options:
 
-### Option 1: Separate Frontend and Backend
+### Option 1: Separate Frontend and Backend (Current Setup)
 
-Deploy the Next.js frontend on Netlify and the Express backend on a separate service like Render, Railway, or Heroku.
+Deploy the Next.js frontend on Netlify and the Express backend on Vercel. This provides:
+- Scalable backend with full Express functionality
+- Optimized frontend delivery via Netlify
+- Clear separation of concerns for easier maintenance
+
+The current live deployment uses this approach, with:
+- Frontend hosted on Netlify
+- Backend API hosted on Vercel
+- Database hosted on Supabase Cloud
 
 ### Option 2: Netlify Functions (Serverless)
 
-Deploy both frontend and backend on Netlify, using Netlify Functions for the backend API. This is the recommended approach for simplicity and cost-effectiveness.
+Deploy both frontend and backend on Netlify, using Netlify Functions for the backend API. This is a simpler approach that works well for smaller applications.
 
 The project includes serverless functions in the `netlify/functions` directory that replace the Express backend. These functions are automatically deployed when you deploy to Netlify.
 
@@ -41,7 +50,7 @@ The project includes serverless functions in the `netlify/functions` directory t
 
 For simple operations, you can use Supabase's Edge Functions to handle backend logic directly in the database.
 
-For detailed deployment instructions, see the [NETLIFY_DEPLOYMENT.md](./NETLIFY_DEPLOYMENT.md) guide.
+For detailed deployment instructions, see the [NETLIFY_DEPLOYMENT.md](./NETLIFY_DEPLOYMENT.md) guide or [VERCEL_DEPLOYMENT.md](./VERCEL_DEPLOYMENT.md) for the current Vercel backend setup.
 
 ## Getting Started
 

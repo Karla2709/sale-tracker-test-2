@@ -9,13 +9,38 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
-app.use(cors());
+// Define allowed origins
+const allowedOrigins = [
+  'https://sale-tracker-mvp.netlify.app',    // Production frontend
+  'http://localhost:3000',                   // Local frontend development
+  process.env.FRONTEND_URL || '',            // Environment variable based frontend URL
+];
+
+// Enhanced CORS configuration
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl requests)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true
+}));
+
 app.use(express.json());
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {
-  res.status(200).json({ status: 'ok', message: 'Server is running' });
+  res.status(200).json({ 
+    status: 'ok', 
+    message: 'Server is running',
+    environment: process.env.NODE_ENV,
+    vercel: process.env.VERCEL === '1' ? true : false
+  });
 });
 
 // LEADS ENDPOINTS
@@ -565,7 +590,13 @@ app.delete('/api/tasks/:id', async (req: Request, res: Response) => {
   }
 });
 
-// Start the server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-}); 
+// Server setup
+if (process.env.VERCEL !== '1') {
+  // Start the server only when not running on Vercel
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+// Export the Express app for Vercel serverless deployment
+export default app; 

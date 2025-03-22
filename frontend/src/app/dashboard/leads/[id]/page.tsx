@@ -10,7 +10,7 @@ import TaskList from '../../../../components/tasks/TaskList';
 
 export default function LeadDetailPage() {
   const params = useParams();
-  const leadId = params.id as string;
+  const leadId = params?.id as string;
   const [lead, setLead] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -18,6 +18,10 @@ export default function LeadDetailPage() {
   useEffect(() => {
     async function fetchLead() {
       try {
+        if (!leadId) {
+          throw new Error('Lead ID is missing');
+        }
+        
         setLoading(true);
         const { data, error } = await supabase
           .from('leads')

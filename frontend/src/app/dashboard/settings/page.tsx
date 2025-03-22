@@ -5,7 +5,7 @@ import { Layout, Typography, Card, Form, Input, Button, Switch, Divider, Select 
 import DashboardLayout from '@/components/layout/DashboardLayout'
 
 const { Content } = Layout
-const { Title, Text } = Typography
+const { Title } = Typography
 const { Option } = Select
 
 const Settings = () => {
@@ -18,8 +18,8 @@ const Settings = () => {
 
   return (
     <DashboardLayout>
-      <Content className="p-6">
-        <div className="content-container">
+      <Content className="p-6" style={{ overflow: 'initial' }}>
+        <div className="content-container max-w-7xl mx-auto">
           <Title level={2} className="mb-6">Settings</Title>
           
           <Card className="max-w-3xl">

@@ -7,15 +7,24 @@ import leadsRouter from './routes/leads';
 // Load environment variables
 dotenv.config();
 
+// Debug: Show environment variables
+console.log('Environment variables loaded:');
+console.log('PORT:', process.env.PORT);
+
 const app = express();
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 3002;
+
+console.log('Server configured to use port:', port);
 
 // Enable CORS for frontend
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: ['http://localhost:3000', 'http://localhost:3003'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+
+// Debug: Log CORS configuration
+console.log('CORS configured with origins:', ['http://localhost:3000', 'http://localhost:3003']);
 
 app.use(express.json());
 

@@ -1,42 +1,69 @@
 'use client';
 
-import React from 'react';
-import { Button, Typography, Layout } from 'antd';
-import Link from 'next/link';
-import Image from 'next/image';
+import React, { useState, useRef } from 'react'
+import { Layout, Typography, message } from 'antd'
+import DashboardLayout from '@/components/layout/DashboardLayout'
+import { LeadTable } from '@/components/leads/LeadTable'
+import { LeadForm } from '@/components/leads/LeadForm'
 
-const { Title, Paragraph } = Typography;
-const { Content } = Layout;
+const { Content } = Layout
+const { Title } = Typography
 
-export default function HomePage() {
+const HomePage = () => {
+  const [isLeadFormOpen, setIsLeadFormOpen] = useState(false)
+  const leadTableRef = useRef<{ fetchLeads: () => void } | null>(null)
+
+  const handleAddNewLead = () => {
+    setIsLeadFormOpen(true)
+  }
+
+  const handleLeadFormCancel = () => {
+    setIsLeadFormOpen(false)
+  }
+
+  const handleLeadFormSubmit = async (values: any) => {
+    try {
+      const response = await fetch('/api/leads', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(values),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create lead');
+      }
+
+      message.success('Lead created successfully');
+      setIsLeadFormOpen(false);
+      
+      // Refresh the table
+      if (leadTableRef.current) {
+        leadTableRef.current.fetchLeads();
+      }
+    } catch (error) {
+      console.error('Error creating lead:', error);
+      message.error('Failed to create lead');
+    }
+  }
+
   return (
-    <Layout className="min-h-screen">
-      <Content className="flex flex-col items-center justify-center p-8">
-        <div className="w-20 h-20 relative mb-8">
-          <Image
-            src="/images/logo.png"
-            alt="Sale Tracker Logo"
-            fill
-            className="object-contain"
-            priority
-          />
+    <DashboardLayout>
+      <div className="content-container mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <Title level={2}>Lead Management</Title>
         </div>
-        
-        <Title level={1} className="text-center mb-4">
-          Welcome to Sale Tracker
-        </Title>
-        
-        <Paragraph className="text-center text-lg mb-8 max-w-2xl">
-          A simplified sales tracking solution for managing your business efficiently.
-          Access your dashboard to view key metrics and manage your settings.
-        </Paragraph>
-        
-        <Link href="/dashboard" passHref>
-          <Button type="primary" size="large">
-            Go to Dashboard
-          </Button>
-        </Link>
-      </Content>
-    </Layout>
-  );
-} 
+
+        <LeadTable ref={leadTableRef} onAddNew={handleAddNewLead} />
+        <LeadForm
+          open={isLeadFormOpen}
+          onCancel={handleLeadFormCancel}
+          onSubmit={handleLeadFormSubmit}
+        />
+      </div>
+    </DashboardLayout>
+  )
+}
+
+export default HomePage 

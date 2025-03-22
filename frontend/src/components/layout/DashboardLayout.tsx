@@ -18,7 +18,7 @@ interface DashboardLayoutProps {
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const { token } = theme.useToken()
-  const pathname = usePathname() || '/dashboard'
+  const pathname = usePathname() || '/'
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -39,26 +39,28 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         {/* Logo and App Name */}
         <div className="flex items-center h-full">
           <div className="flex items-center">
-            <div className="w-10 h-10 relative mr-3">
-              <Image 
-                src="/images/logo.png" 
-                alt="Sale Tracker Logo" 
-                fill 
-                sizes="(max-width: 40px) 100vw"
-                className="object-contain"
-                priority
-              />
-            </div>
-            <h1 className="text-xl font-semibold">Sale Tracker</h1>
+            <Link href="/" className="flex items-center">
+              <div className="w-10 h-10 relative mr-3">
+                <Image 
+                  src="/images/logo.png" 
+                  alt="Sale Tracker Logo" 
+                  fill 
+                  sizes="(max-width: 40px) 100vw"
+                  className="object-contain"
+                  priority
+                />
+              </div>
+              <h1 className="text-xl font-semibold">Sale Tracker</h1>
+            </Link>
           </div>
         </div>
 
         {/* Menu Items */}
         <div className="flex items-center space-x-2">
           <Link 
-            href="/dashboard"
+            href="/"
             className={`flex items-center px-4 py-2 rounded-md transition-colors text-base ${
-              pathname === '/dashboard' 
+              pathname === '/' || pathname === '/dashboard'
                 ? 'text-blue-600 bg-blue-50 font-medium' 
                 : 'text-gray-700 hover:bg-gray-100 hover:text-blue-500'
             }`}
@@ -67,9 +69,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             <span>Dashboard</span>
           </Link>
           <Link 
-            href="/dashboard/settings"
+            href="/settings"
             className={`flex items-center px-4 py-2 rounded-md transition-colors text-base ${
-              pathname === '/dashboard/settings' 
+              pathname === '/settings' || pathname === '/dashboard/settings'
                 ? 'text-blue-600 bg-blue-50 font-medium' 
                 : 'text-gray-700 hover:bg-gray-100 hover:text-blue-500'
             }`}

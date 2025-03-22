@@ -1,8 +1,9 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { Table, Card, Input, Select, Button, Space, DatePicker, Tag, message } from 'antd';
-import { SearchOutlined, PlusOutlined } from '@ant-design/icons';
+import { Table, Card, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
+import { Tag } from 'antd';
+import { FilterValues } from './LeadFilterPanel';
 
 interface Lead {
   id: string;
@@ -21,9 +22,6 @@ interface Lead {
 interface LeadTableProps {
   onAddNew: () => void;
 }
-
-const { RangePicker } = DatePicker;
-const { Option } = Select;
 
 const getStatusColor = (status: string): string => {
   const colors: { [key: string]: string } = {
@@ -49,11 +47,7 @@ const getDomainColor = (domain: string): string => {
   return colors[domain] || '#D3D3D3';
 };
 
-export const LeadTable = forwardRef<{ fetchLeads: () => void }, LeadTableProps>(({ onAddNew }, ref) => {
-  const [searchText, setSearchText] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string | undefined>();
-  const [domainFilter, setDomainFilter] = useState<string | undefined>();
-  const [dateRange, setDateRange] = useState<[any, any] | null>(null);
+export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => void }, LeadTableProps>(({ onAddNew }, ref) => {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<Lead[]>([]);
   const [pagination, setPagination] = useState({
@@ -61,21 +55,36 @@ export const LeadTable = forwardRef<{ fetchLeads: () => void }, LeadTableProps>(
     pageSize: 10,
     total: 0,
   });
+  
+  // Store current filters
+  const [currentFilters, setCurrentFilters] = useState<FilterValues>({
+    searchText: '',
+    statusFilter: undefined,
+    domainFilter: undefined,
+    dateRange: null,
+  });
 
-  const fetchLeads = async (params: any = {}) => {
+  const fetchLeads = async (filters?: FilterValues, params: any = {}) => {
     try {
       setLoading(true);
+      
+      // Update current filters if new ones are provided
+      const activeFilters = filters || currentFilters;
+      if (filters) {
+        setCurrentFilters(filters);
+      }
+      
       const queryParams = new URLSearchParams({
-        page: params.page?.toString() || '1',
-        pageSize: params.pageSize?.toString() || '10',
-        ...(searchText && { search: searchText }),
-        ...(statusFilter && { status: statusFilter }),
-        ...(domainFilter && { client_domain: domainFilter }),
-        ...(dateRange?.[0] && { startDate: dateRange[0].toISOString() }),
-        ...(dateRange?.[1] && { endDate: dateRange[1].toISOString() }),
+        page: params.page?.toString() || pagination.current.toString(),
+        pageSize: params.pageSize?.toString() || pagination.pageSize.toString(),
+        ...(activeFilters.searchText && { search: activeFilters.searchText }),
+        ...(activeFilters.statusFilter && { status: activeFilters.statusFilter }),
+        ...(activeFilters.domainFilter && { client_domain: activeFilters.domainFilter }),
+        ...(activeFilters.dateRange?.[0] && { startDate: activeFilters.dateRange[0].toISOString() }),
+        ...(activeFilters.dateRange?.[1] && { endDate: activeFilters.dateRange[1].toISOString() }),
       });
 
-      const response = await fetch(`http://localhost:3001/api/leads?${queryParams}`);
+      const response = await fetch(`/api/leads?${queryParams}`);
       const result = await response.json();
 
       if (!response.ok) throw new Error(result.error || 'Failed to fetch leads');
@@ -96,7 +105,7 @@ export const LeadTable = forwardRef<{ fetchLeads: () => void }, LeadTableProps>(
   };
 
   useImperativeHandle(ref, () => ({
-    fetchLeads: () => fetchLeads(),
+    fetchLeads: (filters?: FilterValues) => fetchLeads(filters),
   }));
 
   useEffect(() => {
@@ -104,17 +113,13 @@ export const LeadTable = forwardRef<{ fetchLeads: () => void }, LeadTableProps>(
   }, []); // Initial fetch
 
   const handleTableChange = (newPagination: any, filters: any, sorter: any) => {
-    fetchLeads({
+    fetchLeads(undefined, {
       page: newPagination.current,
       pageSize: newPagination.pageSize,
       sortField: sorter.field,
       sortOrder: sorter.order,
       ...filters,
     });
-  };
-
-  const handleSearch = () => {
-    fetchLeads({ page: 1 }); // Reset to first page when searching
   };
 
   const columns: ColumnsType<Lead> = [
@@ -136,16 +141,6 @@ export const LeadTable = forwardRef<{ fetchLeads: () => void }, LeadTableProps>(
           {status}
         </Tag>
       ),
-      filters: [
-        { text: 'New', value: 'New' },
-        { text: 'Reached Out', value: 'Reached Out' },
-        { text: 'Meeting Scheduled', value: 'Meeting Scheduled' },
-        { text: 'First Meeting Complete', value: 'First Meeting Complete' },
-        { text: 'Second Meeting Completed', value: 'Second Meeting Completed' },
-        { text: 'In Dilligence', value: 'In Dilligence' },
-        { text: 'Close Deal', value: 'Close Deal' },
-        { text: 'Prospect Decline', value: 'Prospect Decline' },
-      ],
     },
     {
       title: 'Email',
@@ -169,12 +164,6 @@ export const LeadTable = forwardRef<{ fetchLeads: () => void }, LeadTableProps>(
           {domain}
         </Tag>
       ),
-      filters: [
-        { text: 'Container Shipping', value: 'Container Shipping' },
-        { text: 'Ecommerce', value: 'Ecommerce' },
-        { text: 'Healthcare', value: 'Healthcare' },
-        { text: 'Others', value: 'Others' },
-      ],
     },
     {
       title: 'Contact Platform',
@@ -214,60 +203,18 @@ export const LeadTable = forwardRef<{ fetchLeads: () => void }, LeadTableProps>(
   ];
 
   return (
-    <Card>
-      <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-        <Space wrap>
-          <Input
-            placeholder="Search leads..."
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            style={{ width: 200 }}
-            prefix={<SearchOutlined />}
-          />
-          <Select
-            placeholder="Status"
-            style={{ width: 200 }}
-            onChange={setStatusFilter}
-            allowClear
-          >
-            <Option value="New">New</Option>
-            <Option value="Reached Out">Reached Out</Option>
-            <Option value="Meeting Scheduled">Meeting Scheduled</Option>
-            <Option value="First Meeting Complete">First Meeting Complete</Option>
-            <Option value="Second Meeting Completed">Second Meeting Completed</Option>
-            <Option value="In Dilligence">In Dilligence</Option>
-            <Option value="Close Deal">Close Deal</Option>
-            <Option value="Prospect Decline">Prospect Decline</Option>
-          </Select>
-          <Select
-            placeholder="Client Domain"
-            style={{ width: 180 }}
-            onChange={setDomainFilter}
-            allowClear
-          >
-            <Option value="Container Shipping">Container Shipping</Option>
-            <Option value="Ecommerce">Ecommerce</Option>
-            <Option value="Healthcare">Healthcare</Option>
-            <Option value="Others">Others</Option>
-          </Select>
-          <RangePicker onChange={setDateRange} />
-          <Button type="primary" onClick={handleSearch}>
-            Search
-          </Button>
-          <Button type="primary" icon={<PlusOutlined />} onClick={onAddNew}>
-            Add New Lead
-          </Button>
-        </Space>
-        <Table<Lead>
-          columns={columns}
-          dataSource={data}
-          rowKey="id"
-          loading={loading}
-          pagination={pagination}
-          onChange={handleTableChange}
-          scroll={{ x: 1500 }}
-        />
-      </Space>
+    <Card className="shadow-sm">
+      <Table<Lead>
+        columns={columns}
+        dataSource={data}
+        rowKey="id"
+        loading={loading}
+        pagination={pagination}
+        onChange={handleTableChange}
+        scroll={{ x: '100%', y: 'calc(100vh - 400px)' }}
+        size="middle"
+        bordered
+      />
     </Card>
   );
 }); 

@@ -5,13 +5,14 @@ import { Layout, Typography, message } from 'antd'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import { LeadTable } from '@/components/leads/LeadTable'
 import { LeadForm } from '@/components/leads/LeadForm'
+import { LeadFilterPanel, FilterValues } from '@/components/leads/LeadFilterPanel'
 
 const { Content } = Layout
 const { Title } = Typography
 
 const HomePage = () => {
   const [isLeadFormOpen, setIsLeadFormOpen] = useState(false)
-  const leadTableRef = useRef<{ fetchLeads: () => void } | null>(null)
+  const leadTableRef = useRef<{ fetchLeads: (filters?: FilterValues) => void } | null>(null)
 
   const handleAddNewLead = () => {
     setIsLeadFormOpen(true)
@@ -19,6 +20,12 @@ const HomePage = () => {
 
   const handleLeadFormCancel = () => {
     setIsLeadFormOpen(false)
+  }
+
+  const handleSearch = (filters: FilterValues) => {
+    if (leadTableRef.current) {
+      leadTableRef.current.fetchLeads(filters);
+    }
   }
 
   const handleLeadFormSubmit = async (values: any) => {
@@ -50,12 +57,25 @@ const HomePage = () => {
 
   return (
     <DashboardLayout>
-      <div className="content-container mx-auto">
-        <div className="flex justify-between items-center mb-6">
+      <div className="content-container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-6">
           <Title level={2}>Lead Management</Title>
+          <p className="text-gray-500">Track and manage your leads in one place</p>
         </div>
 
-        <LeadTable ref={leadTableRef} onAddNew={handleAddNewLead} />
+        {/* Search and Filter Panel */}
+        <LeadFilterPanel 
+          onSearch={handleSearch} 
+          onAddNew={handleAddNewLead} 
+        />
+
+        {/* Lead Table */}
+        <LeadTable 
+          ref={leadTableRef} 
+          onAddNew={handleAddNewLead} 
+        />
+        
+        {/* Lead Form Modal */}
         <LeadForm
           open={isLeadFormOpen}
           onCancel={handleLeadFormCancel}

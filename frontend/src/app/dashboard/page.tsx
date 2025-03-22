@@ -1,9 +1,8 @@
 'use client'
 
 import React, { useState, useRef } from 'react'
-import { Layout, Typography, Card, Row, Col, Statistic, message } from 'antd'
+import { Layout, Typography, message } from 'antd'
 import DashboardLayout from '@/components/layout/DashboardLayout'
-import { DashboardOutlined, SettingOutlined } from '@ant-design/icons'
 import { LeadTable } from '@/components/leads/LeadTable'
 import { LeadForm } from '@/components/leads/LeadForm'
 
@@ -51,46 +50,10 @@ const Dashboard = () => {
 
   return (
     <DashboardLayout>
-      <Content className="p-6" style={{ overflow: 'initial' }}>
-        <div className="content-container max-w-7xl mx-auto">
-          <Title level={2} className="mb-6">Dashboard</Title>
-          
-          <Row gutter={[16, 16]}>
-            <Col xs={24} sm={12} lg={8}>
-              <Card>
-                <Statistic 
-                  title="Total Leads" 
-                  value={42} 
-                  prefix={<DashboardOutlined />} 
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={8}>
-              <Card>
-                <Statistic 
-                  title="Active Deals" 
-                  value={12} 
-                  prefix={<DashboardOutlined />} 
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={8}>
-              <Card>
-                <Statistic 
-                  title="System Status" 
-                  value="Online" 
-                  prefix={<SettingOutlined />} 
-                />
-              </Card>
-            </Col>
-          </Row>
-
-          <div className="mt-8">
-            <Title level={4}>Welcome to Sale Tracker</Title>
-            <p className="mt-4">
-              Track and manage your leads efficiently with our comprehensive dashboard.
-              Use the table below to view, filter, and manage your leads.
-            </p>
+      <Content className="py-6" style={{ overflow: 'initial' }}>
+        <div className="content-container mx-auto">
+          <div className="flex justify-between items-center mb-6">
+            <Title level={2}>Lead Management</Title>
           </div>
 
           <LeadTable ref={leadTableRef} onAddNew={handleAddNewLead} />

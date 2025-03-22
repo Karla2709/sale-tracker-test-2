@@ -18,8 +18,8 @@ const Settings = () => {
 
   return (
     <DashboardLayout>
-      <Content className="p-6" style={{ overflow: 'initial' }}>
-        <div className="content-container max-w-7xl mx-auto">
+      <Content className="py-6" style={{ overflow: 'initial' }}>
+        <div className="content-container mx-auto">
           <Title level={2} className="mb-6">Settings</Title>
           
           <Card className="max-w-3xl">

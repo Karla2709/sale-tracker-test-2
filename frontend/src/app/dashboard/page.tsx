@@ -50,20 +50,18 @@ const Dashboard = () => {
 
   return (
     <DashboardLayout>
-      <Content className="py-6" style={{ overflow: 'initial' }}>
-        <div className="content-container mx-auto">
-          <div className="flex justify-between items-center mb-6">
-            <Title level={2}>Lead Management</Title>
-          </div>
-
-          <LeadTable ref={leadTableRef} onAddNew={handleAddNewLead} />
-          <LeadForm
-            open={isLeadFormOpen}
-            onCancel={handleLeadFormCancel}
-            onSubmit={handleLeadFormSubmit}
-          />
+      <div className="content-container mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <Title level={2}>Lead Management</Title>
         </div>
-      </Content>
+
+        <LeadTable ref={leadTableRef} onAddNew={handleAddNewLead} />
+        <LeadForm
+          open={isLeadFormOpen}
+          onCancel={handleLeadFormCancel}
+          onSubmit={handleLeadFormSubmit}
+        />
+      </div>
     </DashboardLayout>
   )
 }

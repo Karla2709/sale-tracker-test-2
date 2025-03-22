@@ -25,20 +25,21 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       <Header 
         style={{ 
           background: token.colorBgContainer, 
-          padding: '0 16px', 
+          padding: '0 24px', 
           position: 'sticky', 
           top: 0, 
           zIndex: 1,
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between'
+          justifyContent: 'space-between',
+          height: '64px'
         }}
       >
         {/* Logo and App Name */}
-        <div className="flex items-center h-16">
+        <div className="flex items-center h-full">
           <div className="flex items-center">
-            <div className="w-10 h-10 relative mr-2">
+            <div className="w-10 h-10 relative mr-3">
               <Image 
                 src="/images/logo.png" 
                 alt="Sale Tracker Logo" 
@@ -48,37 +49,37 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                 priority
               />
             </div>
-            <h1 className="text-xl font-bold">Sale Tracker</h1>
+            <h1 className="text-xl font-semibold">Sale Tracker</h1>
           </div>
         </div>
 
         {/* Menu Items */}
-        <div className="flex items-center space-x-6">
+        <div className="flex items-center space-x-2">
           <Link 
             href="/dashboard"
-            className={`flex items-center px-3 py-2 rounded-md transition-colors ${
+            className={`flex items-center px-4 py-2 rounded-md transition-colors text-base ${
               pathname === '/dashboard' 
-                ? 'text-blue-600 bg-blue-50' 
-                : 'hover:bg-gray-100'
+                ? 'text-blue-600 bg-blue-50 font-medium' 
+                : 'text-gray-700 hover:bg-gray-100 hover:text-blue-500'
             }`}
           >
-            <DashboardOutlined className="mr-1" />
+            <DashboardOutlined className="mr-2 text-lg" />
             <span>Dashboard</span>
           </Link>
           <Link 
             href="/dashboard/settings"
-            className={`flex items-center px-3 py-2 rounded-md transition-colors ${
+            className={`flex items-center px-4 py-2 rounded-md transition-colors text-base ${
               pathname === '/dashboard/settings' 
-                ? 'text-blue-600 bg-blue-50' 
-                : 'hover:bg-gray-100'
+                ? 'text-blue-600 bg-blue-50 font-medium' 
+                : 'text-gray-700 hover:bg-gray-100 hover:text-blue-500'
             }`}
           >
-            <SettingOutlined className="mr-1" />
+            <SettingOutlined className="mr-2 text-lg" />
             <span>Settings</span>
           </Link>
         </div>
       </Header>
-      <Content style={{ padding: '0 50px' }}>
+      <Content style={{ padding: '24px' }}>
         {children}
       </Content>
     </Layout>

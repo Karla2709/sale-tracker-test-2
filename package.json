@@ -4,7 +4,7 @@
   "description": "Sales Tracker MVP with Supabase integration",
   "main": "index.js",
   "scripts": {
-    "frontend": "cd frontend && npm run dev -- -p 3003",
+    "frontend": "cd frontend && npm run dev",
     "backend": "cd backend && npm run dev",
     "dev": "concurrently \"npm run frontend\" \"npm run backend\"",
     "install-all": "npm install && cd frontend && npm install && cd ../backend && npm install",

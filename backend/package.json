@@ -7,14 +7,10 @@
     "start": "node dist/index.js",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
-    "vercel-build": "tsc",
     "init-db": "npx ts-node src/scripts/init-db.ts",
     "seed-db": "npx ts-node src/scripts/seed-db.ts",
     "export-sql": "npx ts-node src/scripts/export-sql.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "engines": {
-    "node": ">=18.x"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.3",

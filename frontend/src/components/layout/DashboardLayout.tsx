@@ -5,12 +5,11 @@ import { Layout, Menu, Button, theme } from 'antd'
 import {
   MenuUnfoldOutlined,
   MenuFoldOutlined,
-  UserOutlined,
   DashboardOutlined,
   SettingOutlined,
-  CheckSquareOutlined,
 } from '@ant-design/icons'
 import Link from 'next/link'
+import Image from 'next/image'
 
 const { Header, Sider, Content } = Layout
 
@@ -32,8 +31,30 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             onClick={() => setCollapsed(!collapsed)}
             className="mr-2"
           />
-          <h1 className={`text-xl font-bold ${collapsed ? 'hidden' : 'block'}`}>Sale Tracker</h1>
-          <h1 className={`text-xl font-bold ${collapsed ? 'block' : 'hidden'}`}>ST</h1>
+          {collapsed ? (
+            <div className="w-8 h-8 relative">
+              <Image 
+                src="/images/logo.png" 
+                alt="Sale Tracker Logo" 
+                fill 
+                className="object-contain"
+                priority
+              />
+            </div>
+          ) : (
+            <div className="flex items-center">
+              <div className="w-10 h-10 relative mr-2">
+                <Image 
+                  src="/images/logo.png" 
+                  alt="Sale Tracker Logo" 
+                  fill 
+                  className="object-contain"
+                  priority
+                />
+              </div>
+              <h1 className="text-xl font-bold">Sale Tracker</h1>
+            </div>
+          )}
         </div>
         <Menu
           mode="inline"
@@ -46,16 +67,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             },
             {
               key: '2',
-              icon: <UserOutlined />,
-              label: <Link href="/dashboard/leads">Leads</Link>,
-            },
-            {
-              key: '3',
-              icon: <CheckSquareOutlined />,
-              label: <Link href="/tasks">Tasks</Link>,
-            },
-            {
-              key: '4',
               icon: <SettingOutlined />,
               label: <Link href="/dashboard/settings">Settings</Link>,
             },

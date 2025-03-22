@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import DashboardLayout from '../../../components/layout/DashboardLayout';
-import { supabase } from '../../../lib/supabase';
+import api from '../../../lib/api';
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<any[]>([]);
@@ -14,15 +14,7 @@ export default function LeadsPage() {
     async function fetchLeads() {
       try {
         setLoading(true);
-        const { data, error } = await supabase
-          .from('leads')
-          .select(`
-            *,
-            company:companies(name, industry)
-          `)
-          .order('created_at', { ascending: false });
-          
-        if (error) throw error;
+        const data = await api.getLeads() as any[];
         setLeads(data || []);
       } catch (err) {
         setError(err instanceof Error ? err : new Error('Failed to fetch leads'));

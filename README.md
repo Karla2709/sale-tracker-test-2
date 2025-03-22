@@ -16,27 +16,35 @@ A SaaS tool for tracking potential clients in the IT consulting sector, focusing
 - **Backend**: Node.js, Express, TypeScript
 - **Database**: PostgreSQL (via Supabase)
 - **Authentication**: Supabase Auth
-- **Deployment**: Netlify with Serverless Functions
 
-## Deployment Options
+## Local Development Setup
 
-This application supports multiple deployment options:
+### Prerequisites
 
-### Option 1: Separate Frontend and Backend
+- Node.js (v16+)
+- npm or yarn
+- Docker (for local Supabase)
 
-Deploy the Next.js frontend on Netlify and the Express backend on a separate service like Render, Railway, or Heroku.
+### Setting Up Supabase
 
-### Option 2: Netlify Functions (Serverless)
+#### Local Development with Supabase CLI
 
-Deploy both frontend and backend on Netlify, using Netlify Functions for the backend API. This is the recommended approach for simplicity and cost-effectiveness.
+1. Start the local Supabase services:
 
-The project includes serverless functions in the `netlify/functions` directory that replace the Express backend. These functions are automatically deployed when you deploy to Netlify.
+```bash
+npx supabase start
+```
 
-### Option 3: Supabase Functions
+2. This will provide you with local URLs and keys for Supabase services:
+   - API URL: http://127.0.0.1:54321
+   - Studio URL: http://127.0.0.1:54323
+   - Anon Key and Service Role Key will be displayed in the terminal
 
-For simple operations, you can use Supabase's Edge Functions to handle backend logic directly in the database.
+3. Apply the database migrations and seed data:
 
-For detailed deployment instructions, see the [NETLIFY_DEPLOYMENT.md](./NETLIFY_DEPLOYMENT.md) guide.
+```bash
+npx supabase db reset
+```
 
 ## Getting Started
 
@@ -167,58 +175,41 @@ The database schema includes the following tables:
 
 ## Database Migration
 
-### Setting Up Cloud Database
+### Working with Local Database
 
-Follow these steps to link your local Supabase instance to a cloud project and push your local database schema and data to the cloud:
-
-1. Log in to Supabase CLI:
+1. Apply database migrations:
 
 ```bash
-npx supabase login
+npx supabase db reset
 ```
 
-2. List your available Supabase projects:
+2. To export your schema for version control:
 
 ```bash
-npx supabase projects list
-```
-
-3. Link your local instance to a cloud project:
-
-```bash
-npx supabase link --project-ref your-project-ref-id
-```
-
-4. Create a new migration file:
-
-```bash
-npx supabase migration new my_migration_name
-```
-
-5. Edit the migration file (located in `supabase/migrations/`) to include your schema and seed data with proper IF NOT EXISTS clauses to handle conflicts
-
-6. Push the migrations to the cloud database:
-
-```bash
-npx supabase db push
+npm run export-sql
 ```
 
 ### Environment Configuration
 
-Two environment files control where your application connects:
+The environment file controls where your application connects:
 
 - `.env.local`: For local development (points to local Supabase)
-- `.env.production`: For production/cloud environment (points to cloud Supabase)
 
-To switch between environments:
+## Testing
 
+To properly test the application, make sure all services are running:
+
+1. Start local Supabase:
 ```bash
-# For local development
-cp .env.local .env
-
-# For production
-cp .env.production .env
+npx supabase start
 ```
+
+2. Start the application:
+```bash
+npm run dev
+```
+
+3. Access the application at `http://localhost:3000` and the API at `http://localhost:3001`
 
 ## License
 

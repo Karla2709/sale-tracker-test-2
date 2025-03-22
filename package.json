@@ -8,8 +8,6 @@
     "backend": "cd backend && npm run dev",
     "dev": "concurrently \"npm run frontend\" \"npm run backend\"",
     "install-all": "npm install && cd frontend && npm install && cd ../backend && npm install",
-    "install-functions": "cd netlify/functions && npm install",
-    "netlify-dev": "netlify dev",
     "init-db": "cd backend && npm run init-db",
     "seed-db": "cd backend && npm run seed-db",
     "export-sql": "cd backend && npm run export-sql",

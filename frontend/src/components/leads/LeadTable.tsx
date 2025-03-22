@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Table, Tag, Button, Space, Modal, Form, Input, Select, Typography } from 'antd'
+import { Table, Tag, Button, Space, Modal, Form, Input, Select, Typography, Spin, Alert } from 'antd'
 import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons'
 import { useLeads } from '@/lib/contexts/LeadContext'
 import { Lead, LeadStatus, FocusDomain, ContactPlatform } from '@/lib/types/lead'
@@ -11,7 +11,7 @@ const { TextArea } = Input
 const { Title } = Typography
 
 const LeadTable = () => {
-  const { filteredLeads, addLead, updateLead, deleteLead } = useLeads()
+  const { filteredLeads, addLead, updateLead, deleteLead, loading, error } = useLeads()
   const [isModalVisible, setIsModalVisible] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
   const [currentLead, setCurrentLead] = useState<Lead | null>(null)
@@ -132,6 +132,27 @@ const LeadTable = () => {
     },
   ]
 
+  // If there's an error fetching leads
+  if (error) {
+    return (
+      <Alert
+        message="Error Loading Leads"
+        description={error.message || "There was a problem loading the leads data."}
+        type="error"
+        showIcon
+      />
+    );
+  }
+
+  // Show loading spinner while data is being fetched
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <Spin size="large" tip="Loading leads..." />
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
@@ -149,6 +170,7 @@ const LeadTable = () => {
         columns={columns} 
         dataSource={filteredLeads} 
         rowKey="id"
+        loading={loading}
         expandable={{
           expandedRowRender: (record) => (
             <div className="p-4">

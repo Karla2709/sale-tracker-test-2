@@ -30,22 +30,27 @@ export default function LeadsPage() {
   };
 
   return (
-    <main className="p-3" style={{ maxWidth: '100%', margin: '0 auto' }}>
-      <div className="mb-3 flex justify-between items-center">
+    <main className="px-0" style={{ maxWidth: '100%' }}>
+      <div className="mx-6 mb-3 flex justify-between items-center">
         <h1 className="text-2xl font-bold">Lead Management</h1>
+        <Button 
+          type="primary" 
+          icon={<PlusOutlined />} 
+          onClick={handleAddNew}
+          style={{ display: 'flex', alignItems: 'center' }}
+          size="middle"
+        >
+          Add New
+        </Button>
       </div>
 
-      <Row gutter={[0, 12]}>
-        <Col span={24}>
-          <LeadFilterPanel onFilter={handleFilter} onAddNew={handleAddNew} />
-        </Col>
-      </Row>
+      <div className="mx-6 mb-3">
+        <LeadFilterPanel onFilter={handleFilter} />
+      </div>
 
-      <Row gutter={[0, 0]}>
-        <Col span={24}>
-          <LeadTable ref={leadTableRef} onAddNew={handleAddNew} />
-        </Col>
-      </Row>
+      <div className="px-0 w-full">
+        <LeadTable ref={leadTableRef} onAddNew={handleAddNew} />
+      </div>
 
       <Modal
         title="Add New Lead"

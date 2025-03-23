@@ -10,8 +10,8 @@ const { Search } = Input;
 
 export interface FilterValues {
   searchText: string;
-  statusFilter: string[] | string | undefined;
-  domainFilter: string[] | string | undefined;
+  statusFilter: string[];
+  domainFilter: string[];
   dateRange: [Dayjs, Dayjs] | null;
 }
 
@@ -40,11 +40,12 @@ const domainOptions = [
 
 export const LeadFilterPanel: React.FC<LeadFilterPanelProps> = ({ onFilter }) => {
   const [searchText, setSearchText] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string[] | undefined>(undefined);
-  const [domainFilter, setDomainFilter] = useState<string[] | undefined>(undefined);
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
+  const [domainFilter, setDomainFilter] = useState<string[]>([]);
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null);
 
   const handleSearch = () => {
+    console.log('Search triggered with:', { searchText, statusFilter, domainFilter, dateRange });
     onFilter({
       searchText,
       statusFilter,
@@ -54,17 +55,22 @@ export const LeadFilterPanel: React.FC<LeadFilterPanelProps> = ({ onFilter }) =>
   };
 
   const handleReset = () => {
+    // Clear all state
     setSearchText('');
-    setStatusFilter(undefined);
-    setDomainFilter(undefined);
+    setStatusFilter([]);
+    setDomainFilter([]);
     setDateRange(null);
     
-    onFilter({
-      searchText: '',
-      statusFilter: undefined,
-      domainFilter: undefined,
-      dateRange: null,
-    });
+    // Trigger the filter with reset values
+    console.log('Reset triggered, clearing all filters');
+    setTimeout(() => {
+      onFilter({
+        searchText: '',
+        statusFilter: [],
+        domainFilter: [],
+        dateRange: null,
+      });
+    }, 0);
   };
 
   return (
@@ -122,9 +128,10 @@ export const LeadFilterPanel: React.FC<LeadFilterPanelProps> = ({ onFilter }) =>
             value={statusFilter}
             onChange={(value) => {
               setStatusFilter(value);
+              console.log('Status filter changed:', value);
               onFilter({
                 searchText,
-                statusFilter: value,
+                statusFilter: value || [],
                 domainFilter,
                 dateRange,
               });
@@ -147,10 +154,11 @@ export const LeadFilterPanel: React.FC<LeadFilterPanelProps> = ({ onFilter }) =>
             value={domainFilter}
             onChange={(value) => {
               setDomainFilter(value);
+              console.log('Domain filter changed:', value);
               onFilter({
                 searchText,
                 statusFilter,
-                domainFilter: value,
+                domainFilter: value || [],
                 dateRange,
               });
             }}

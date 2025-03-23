@@ -59,7 +59,8 @@ const useEditLead = ({ onSuccess }: { onSuccess?: () => void }) => {
     
     try {
       setLoading(true);
-      const response = await fetch(`/api/leads/${currentLead.id}`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/leads/${currentLead.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -129,8 +130,8 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
   // Store current filters
   const [currentFilters, setCurrentFilters] = useState<FilterValues>({
     searchText: '',
-    statusFilter: undefined,
-    domainFilter: undefined,
+    statusFilter: [],
+    domainFilter: [],
     dateRange: null,
   });
 
@@ -160,27 +161,54 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
       }
 
       // Helper function to handle arrays for filters
-      const getFilterParams = (filter: string[] | string | undefined) => {
-        if (Array.isArray(filter)) {
+      const getFilterParams = (filter: string[]): string => {
+        if (filter.length > 0) {
           return filter.join(',');
         }
-        return filter;
+        return '';
       };
       
-      const queryParams = new URLSearchParams({
-        page: params.page?.toString() || pagination.current.toString(),
-        pageSize: params.pageSize?.toString() || pagination.pageSize.toString(),
-        ...(activeFilters.searchText && { search: activeFilters.searchText }),
-        ...(activeFilters.statusFilter && { status: getFilterParams(activeFilters.statusFilter) }),
-        ...(activeFilters.domainFilter && { client_domain: getFilterParams(activeFilters.domainFilter) }),
-        ...(activeFilters.dateRange?.[0] && { startDate: activeFilters.dateRange[0].toISOString() }),
-        ...(activeFilters.dateRange?.[1] && { endDate: activeFilters.dateRange[1].toISOString() }),
-      });
+      // Build query parameters
+      const queryParams = new URLSearchParams();
+      
+      // Add pagination
+      queryParams.append('page', params.page?.toString() || pagination.current.toString());
+      queryParams.append('pageSize', params.pageSize?.toString() || pagination.pageSize.toString());
+      
+      // Add search filter
+      if (activeFilters.searchText) {
+        queryParams.append('search', activeFilters.searchText);
+      }
+      
+      // Add status filter
+      if (activeFilters.statusFilter.length > 0) {
+        queryParams.append('status', getFilterParams(activeFilters.statusFilter));
+      }
+      
+      // Add domain filter
+      if (activeFilters.domainFilter.length > 0) {
+        queryParams.append('client_domain', getFilterParams(activeFilters.domainFilter));
+      }
+      
+      // Add date range filters
+      if (activeFilters.dateRange?.[0]) {
+        queryParams.append('startDate', activeFilters.dateRange[0].toISOString());
+      }
+      
+      if (activeFilters.dateRange?.[1]) {
+        queryParams.append('endDate', activeFilters.dateRange[1].toISOString());
+      }
 
-      const response = await fetch(`/api/leads?${queryParams}`);
+      console.log('Fetching leads with params:', queryParams.toString());
+      
+      // Use the full API URL instead of relying on proxying
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/leads?${queryParams.toString()}`);
       const result = await response.json();
 
       if (!response.ok) throw new Error(result.error || 'Failed to fetch leads');
+
+      console.log('Received data:', result);
 
       setData(result.data);
       setPagination({
@@ -232,7 +260,8 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
     
     try {
       setLoading(true);
-      const response = await fetch(`/api/leads/${selectedLead.id}`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/leads/${selectedLead.id}`, {
         method: 'DELETE',
       });
 
@@ -412,9 +441,9 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
   return (
     <>
       <Card 
-        className="shadow-sm" 
+        className="shadow-sm w-full" 
         bodyStyle={{ padding: '12px 16px' }}
-        style={{ width: '100%' }}
+        style={{ width: '100%', margin: 0 }}
       >
         <Table<Lead>
           columns={columns}

@@ -33,7 +33,8 @@ export const useCreateLead = ({ onSuccess }: UseCreateLeadProps = {}) => {
   const handleSubmit = async (values: Lead) => {
     try {
       setLoading(true);
-      const response = await fetch('/api/leads', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/leads`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

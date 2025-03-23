@@ -1,9 +1,12 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { Table, Card, message } from 'antd';
+import { Table, Card, message, Dropdown, Button, Modal } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { Tag } from 'antd';
+import { MoreOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { FilterValues } from './LeadFilterPanel';
+import { useEditLead } from '@/hooks/useEditLead';
+import { LeadForm } from './LeadForm';
 
 interface Lead {
   id: string;
@@ -62,6 +65,21 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
     statusFilter: undefined,
     domainFilter: undefined,
     dateRange: null,
+  });
+
+  // State for delete modal
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+
+  // Use the edit lead hook
+  const { 
+    modalOpen: editModalOpen, 
+    currentLead,
+    handleSubmit: handleEditSubmit, 
+    openModal: openEditModal, 
+    closeModal: closeEditModal 
+  } = useEditLead({
+    onSuccess: () => fetchLeads()
   });
 
   const fetchLeads = async (filters?: FilterValues, params: any = {}) => {
@@ -130,6 +148,43 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
     });
   };
 
+  // Handle edit action
+  const handleEdit = (record: Lead) => {
+    openEditModal(record);
+  };
+
+  // Handle delete action
+  const handleDelete = (record: Lead) => {
+    setSelectedLead(record);
+    setDeleteModalVisible(true);
+  };
+
+  // Confirm delete action
+  const confirmDelete = async () => {
+    if (!selectedLead) return;
+    
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/leads/${selectedLead.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete lead');
+      }
+
+      message.success('Lead deleted successfully');
+      fetchLeads(); // Refresh the list
+      setDeleteModalVisible(false);
+      setSelectedLead(null);
+    } catch (error) {
+      console.error('Error deleting lead:', error);
+      message.error('Failed to delete lead');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const columns: ColumnsType<Lead> = [
     {
       title: 'Name',
@@ -142,7 +197,6 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      fixed: 'left',
       width: 150,
       render: (status: string) => (
         <Tag color={getStatusColor(status)} style={{ color: '#333', padding: '2px 8px', borderRadius: '12px', fontWeight: 500 }}>
@@ -208,24 +262,92 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
       width: 300,
       ellipsis: true,
     },
+    {
+      title: 'Actions',
+      key: 'actions',
+      fixed: 'right',
+      width: 80,
+      render: (_, record) => (
+        <Dropdown
+          menu={{
+            items: [
+              {
+                key: 'edit',
+                label: 'Edit',
+                icon: <EditOutlined />,
+                onClick: () => handleEdit(record),
+              },
+              {
+                key: 'delete',
+                label: 'Delete',
+                icon: <DeleteOutlined />,
+                danger: true,
+                onClick: () => handleDelete(record),
+              },
+            ],
+          }}
+          trigger={['click']}
+          placement="bottomRight"
+        >
+          <Button 
+            type="text" 
+            icon={<MoreOutlined />} 
+            className="border-0 shadow-none"
+            style={{ 
+              borderRadius: '50%', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              width: '32px',
+              height: '32px'
+            }}
+          />
+        </Dropdown>
+      ),
+    },
   ];
 
   return (
-    <Card 
-      className="shadow-sm" 
-      bodyStyle={{ padding: '16px 25px' }}
-    >
-      <Table<Lead>
-        columns={columns}
-        dataSource={data}
-        rowKey="id"
-        loading={loading}
-        pagination={pagination}
-        onChange={handleTableChange}
-        scroll={{ x: '100%', y: 'calc(100vh - 380px)' }}
-        size="middle"
-        bordered
+    <>
+      <Card 
+        className="shadow-sm" 
+        bodyStyle={{ padding: '12px 16px' }}
+      >
+        <Table<Lead>
+          columns={columns}
+          dataSource={data}
+          rowKey="id"
+          loading={loading}
+          pagination={pagination}
+          onChange={handleTableChange}
+          scroll={{ x: '100%', y: 'calc(100vh - 340px)' }}
+          size="middle"
+          bordered
+        />
+      </Card>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        title="Confirm Delete"
+        open={deleteModalVisible}
+        onOk={confirmDelete}
+        onCancel={() => setDeleteModalVisible(false)}
+        okText="Delete"
+        okButtonProps={{ danger: true, loading: loading }}
+        cancelButtonProps={{ disabled: loading }}
+      >
+        <p>Are you sure you want to delete the lead <strong>{selectedLead?.name}</strong>?</p>
+        <p>This action cannot be undone.</p>
+      </Modal>
+
+      {/* Edit Lead Modal */}
+      <LeadForm
+        open={editModalOpen}
+        onCancel={closeEditModal}
+        onSubmit={handleEditSubmit}
+        initialValues={currentLead || undefined}
+        title="Edit Lead"
       />
-    </Card>
+    </>
   );
 }); 

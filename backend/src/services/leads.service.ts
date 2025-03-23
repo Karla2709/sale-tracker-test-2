@@ -45,14 +45,30 @@ export class LeadService {
       if (search) {
         query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
       }
+      
+      // Handle multiple status filters
       if (status) {
-        query = query.eq('status', status);
+        const statusArray = status.split(',');
+        if (statusArray.length > 1) {
+          query = query.in('status', statusArray);
+        } else {
+          query = query.eq('status', status);
+        }
       }
+      
+      // Handle multiple client_domain filters
       if (client_domain) {
-        query = query.eq('client_domain', client_domain);
+        const domainArray = client_domain.split(',');
+        if (domainArray.length > 1) {
+          query = query.in('client_domain', domainArray);
+        } else {
+          query = query.eq('client_domain', client_domain);
+        }
       }
+      
+      // Apply date filters
       if (startDate && endDate) {
-        query = query.gte('created_at', startDate).lte('created_at', endDate);
+        query = query.gte('last_contact_date', startDate).lte('last_contact_date', endDate);
       }
 
       // Apply pagination

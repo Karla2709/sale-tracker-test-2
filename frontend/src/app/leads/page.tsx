@@ -30,18 +30,18 @@ export default function LeadsPage() {
   };
 
   return (
-    <main className="p-4" style={{ maxWidth: '100%' }}>
-      <div className="mb-4 flex justify-between items-center">
+    <main className="p-3" style={{ maxWidth: '100%', margin: '0 auto' }}>
+      <div className="mb-3 flex justify-between items-center">
         <h1 className="text-2xl font-bold">Lead Management</h1>
       </div>
 
-      <Row gutter={[0, 16]}>
+      <Row gutter={[0, 12]}>
         <Col span={24}>
           <LeadFilterPanel onFilter={handleFilter} onAddNew={handleAddNew} />
         </Col>
       </Row>
 
-      <Row gutter={[0, 16]}>
+      <Row gutter={[0, 0]}>
         <Col span={24}>
           <LeadTable ref={leadTableRef} onAddNew={handleAddNew} />
         </Col>

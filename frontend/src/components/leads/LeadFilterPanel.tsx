@@ -68,16 +68,17 @@ export const LeadFilterPanel: React.FC<LeadFilterPanelProps> = ({ onFilter, onAd
 
   return (
     <Card 
-      className="shadow-sm mb-4" 
-      bodyStyle={{ padding: '16px 25px' }}
+      className="shadow-sm mb-3" 
+      bodyStyle={{ padding: '12px 16px' }}
+      style={{ marginBottom: '8px' }}
     >
-      <div className="flex items-center mb-3">
+      <div className="flex items-center mb-2">
         <FilterOutlined className="mr-2 text-blue-500" />
         <span className="text-lg font-medium">Search & Filter</span>
       </div>
       
       {/* First line: Search input and buttons */}
-      <Row gutter={[16, 16]} className="mb-3">
+      <Row gutter={[12, 12]} className="mb-2">
         <Col xs={24} sm={24} md={16} lg={18} xl={18}>
           <Input
             placeholder="Search by name, email, phone..."
@@ -92,7 +93,7 @@ export const LeadFilterPanel: React.FC<LeadFilterPanelProps> = ({ onFilter, onAd
         
         <Col xs={24} sm={24} md={8} lg={6} xl={6}>
           <div className="flex justify-end">
-            <Space>
+            <Space size="small">
               <Button 
                 type="primary" 
                 icon={<FilterOutlined />} 
@@ -118,10 +119,10 @@ export const LeadFilterPanel: React.FC<LeadFilterPanelProps> = ({ onFilter, onAd
         </Col>
       </Row>
       
-      <Divider style={{ margin: '8px 0' }} />
+      <Divider style={{ margin: '6px 0' }} />
       
       {/* Second line: Filter options */}
-      <Row gutter={[16, 16]}>
+      <Row gutter={[12, 12]}>
         <Col xs={24} sm={12} md={6} lg={6} xl={6}>
           <div className="mb-1">
             <Text type="secondary" strong>Status</Text>

@@ -246,13 +246,16 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
     }
   };
 
-  // Expose fetchLeads through the ref
+  // Expose fetchLeads through the ref with improved safety
   useImperativeHandle(ref, () => ({
     fetchLeads: (filters?: FilterValues) => {
       console.log('fetchLeads called via ref with filters:', filters);
-      return fetchLeads(filters).catch(err => {
+      try {
+        return fetchLeads(filters);
+      } catch (err) {
         console.error('Error during fetchLeads called from ref:', err);
-      });
+        return Promise.resolve(); // Return a resolved promise to avoid unhandled rejections
+      }
     },
   }), []);
 
@@ -260,24 +263,32 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
   useEffect(() => {
     console.log('LeadTable mounted, fetching initial data');
     
-    // Small delay to ensure everything is properly initialized
+    // Use a flag to track component mount state
+    let isMounted = true;
+    
+    // Delay initial fetch to ensure all components are ready
     const timer = setTimeout(() => {
-      fetchLeads().catch(err => {
-        console.error('Error during initial data fetch:', err);
-      });
-    }, 500);
+      if (isMounted) {
+        fetchLeads()
+          .then(() => console.log('Initial data fetch completed'))
+          .catch(err => console.error('Error during initial data fetch:', err));
+      }
+    }, 1000); // Increased delay for safety
     
     // Expose a global debug function for manual refreshing
     if (typeof window !== 'undefined') {
       (window as any).__refreshLeads = () => {
         console.log('Manual refresh triggered');
-        fetchLeads().catch(err => {
-          console.error('Error during manual refresh:', err);
-        });
+        if (isMounted) {
+          fetchLeads()
+            .then(() => console.log('Manual refresh completed'))
+            .catch(err => console.error('Error during manual refresh:', err));
+        }
       };
     }
     
     return () => {
+      isMounted = false;
       clearTimeout(timer);
       // Clean up
       if (typeof window !== 'undefined') {

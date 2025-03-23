@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Input, Row, Col, Select, DatePicker, Button, Space, Typography, Divider } from 'antd';
 import { SearchOutlined, FilterOutlined, ReloadOutlined, CalendarOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -38,35 +38,49 @@ const domainOptions = [
   { value: 'Others', label: 'Others' },
 ];
 
-// Create a no-op function as fallback
-const noop = (values: FilterValues) => {
-  console.warn('Filter function called but not provided by parent', values);
+// Default empty filter values
+const emptyFilterValues: FilterValues = {
+  searchText: '',
+  statusFilter: [],
+  domainFilter: [],
+  dateRange: null
 };
 
-export const LeadFilterPanel: React.FC<LeadFilterPanelProps> = ({ onFilter = noop }) => {
+export const LeadFilterPanel: React.FC<LeadFilterPanelProps> = ({ onFilter }) => {
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [domainFilter, setDomainFilter] = useState<string[]>([]);
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null);
-  const [isComponentMounted, setIsComponentMounted] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Set the component as mounted to prevent initial filter calls
+  // Don't apply filters on initial mount - wait until user interaction
   useEffect(() => {
-    setIsComponentMounted(true);
-    return () => setIsComponentMounted(false);
+    setIsInitialized(true);
+    
+    // Cleanup state on unmount
+    return () => {
+      setIsInitialized(false);
+    };
   }, []);
-  
-  // Debounced filter application to prevent multiple rapid calls
-  const applyFilter = useCallback((filterValues: FilterValues) => {
-    if (!isComponentMounted) return;
+
+  // Safe wrapper for filter application
+  const applyFilter = (filterValues: FilterValues) => {
+    if (!isInitialized) {
+      console.log('Component not initialized yet, skipping filter');
+      return;
+    }
     
     console.log('Applying filter:', filterValues);
     try {
-      onFilter(filterValues);
+      if (typeof onFilter === 'function') {
+        onFilter(filterValues);
+      } else {
+        console.warn('Filter function called but not provided by parent', filterValues);
+      }
     } catch (error) {
       console.error('Error applying filter:', error);
     }
-  }, [onFilter, isComponentMounted]);
+  };
 
   const handleSearch = () => {
     console.log('Search triggered with:', { searchText, statusFilter, domainFilter, dateRange });
@@ -87,36 +101,37 @@ export const LeadFilterPanel: React.FC<LeadFilterPanelProps> = ({ onFilter = noo
     
     // Trigger the filter with reset values
     console.log('Reset triggered, clearing all filters');
-    applyFilter({
-      searchText: '',
-      statusFilter: [],
-      domainFilter: [],
-      dateRange: null,
-    });
+    applyFilter(emptyFilterValues);
   };
 
   // Handler for status filter change
   const handleStatusChange = (value: string[]) => {
     console.log('Status filter changed:', value);
     setStatusFilter(value);
-    applyFilter({
-      searchText,
-      statusFilter: value,
-      domainFilter,
-      dateRange,
-    });
+    // Only apply the filter if the component is fully initialized
+    if (isInitialized) {
+      applyFilter({
+        searchText,
+        statusFilter: value,
+        domainFilter,
+        dateRange,
+      });
+    }
   };
 
   // Handler for domain filter change
   const handleDomainChange = (value: string[]) => {
     console.log('Domain filter changed:', value);
     setDomainFilter(value);
-    applyFilter({
-      searchText,
-      statusFilter,
-      domainFilter: value,
-      dateRange,
-    });
+    // Only apply the filter if the component is fully initialized
+    if (isInitialized) {
+      applyFilter({
+        searchText,
+        statusFilter,
+        domainFilter: value,
+        dateRange,
+      });
+    }
   };
 
   // Handler for date range change
@@ -126,12 +141,15 @@ export const LeadFilterPanel: React.FC<LeadFilterPanelProps> = ({ onFilter = noo
   ) => {
     const typedDates = dates as [Dayjs, Dayjs] | null;
     setDateRange(typedDates);
-    applyFilter({
-      searchText,
-      statusFilter,
-      domainFilter,
-      dateRange: typedDates,
-    });
+    // Only apply the filter if the component is fully initialized
+    if (isInitialized) {
+      applyFilter({
+        searchText,
+        statusFilter,
+        domainFilter,
+        dateRange: typedDates,
+      });
+    }
   };
 
   return (

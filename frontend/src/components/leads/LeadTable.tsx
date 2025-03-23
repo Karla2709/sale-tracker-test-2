@@ -1,12 +1,13 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { Table, Card, message, Dropdown, Button, Modal } from 'antd';
+import { Table, Card, message, Dropdown, Button, Modal, Typography, Form } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { Tag } from 'antd';
 import { MoreOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { FilterValues } from './LeadFilterPanel';
-import { useEditLead } from '@/hooks/useEditLead';
 import { LeadForm } from './LeadForm';
+
+const { Text } = Typography;
 
 interface Lead {
   id: string;
@@ -25,6 +26,72 @@ interface Lead {
 interface LeadTableProps {
   onAddNew: () => void;
 }
+
+// Implement the useEditLead functionality directly in this component
+const useEditLead = ({ onSuccess }: { onSuccess?: () => void }) => {
+  const [form] = Form.useForm();
+  const [modalOpen, setModalOpen] = useState(false);
+  const [currentLead, setCurrentLead] = useState<Lead | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const openModal = (lead: Lead) => {
+    setCurrentLead(lead);
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setCurrentLead(null);
+    form.resetFields();
+  };
+
+  const handleSubmit = async (values: {
+    name: string;
+    email: string;
+    phone: string;
+    status: string;
+    client_domain: string;
+    contact_platform: string;
+    location: string;
+    note?: string;
+  }) => {
+    if (!currentLead?.id) return;
+    
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/leads/${currentLead.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(values),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update lead');
+      }
+
+      message.success('Lead updated successfully');
+      closeModal();
+      if (onSuccess) onSuccess();
+    } catch (error) {
+      console.error('Error updating lead:', error);
+      message.error('Failed to update lead');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    form,
+    modalOpen,
+    loading,
+    currentLead,
+    handleSubmit,
+    openModal,
+    closeModal,
+  };
+};
 
 const getStatusColor = (status: string): string => {
   const colors: { [key: string]: string } = {
@@ -192,14 +259,28 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
       key: 'name',
       fixed: 'left',
       width: 150,
+      render: (text) => <Text ellipsis={{ tooltip: text }}>{text}</Text>,
     },
     {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      width: 150,
+      width: 160,
       render: (status: string) => (
-        <Tag color={getStatusColor(status)} style={{ color: '#333', padding: '2px 8px', borderRadius: '12px', fontWeight: 500 }}>
+        <Tag 
+          color={getStatusColor(status)} 
+          style={{ 
+            color: '#333', 
+            padding: '2px 8px', 
+            borderRadius: '12px', 
+            fontWeight: 500,
+            maxWidth: '100%',
+            display: 'inline-block',
+            whiteSpace: 'normal',
+            wordBreak: 'break-word',
+            lineHeight: '1.4'
+          }}
+        >
           {status}
         </Tag>
       ),
@@ -209,20 +290,35 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
       dataIndex: 'email',
       key: 'email',
       width: 200,
+      render: (text) => <Text ellipsis={{ tooltip: text }}>{text}</Text>,
     },
     {
       title: 'Phone',
       dataIndex: 'phone',
       key: 'phone',
       width: 150,
+      render: (text) => <Text ellipsis={{ tooltip: text }}>{text}</Text>,
     },
     {
       title: 'Client Domain',
       dataIndex: 'client_domain',
       key: 'client_domain',
-      width: 150,
+      width: 160,
       render: (domain: string) => (
-        <Tag color={getDomainColor(domain)} style={{ color: '#333', padding: '2px 8px', borderRadius: '12px', fontWeight: 500 }}>
+        <Tag 
+          color={getDomainColor(domain)} 
+          style={{ 
+            color: '#333', 
+            padding: '2px 8px', 
+            borderRadius: '12px', 
+            fontWeight: 500,
+            maxWidth: '100%',
+            display: 'inline-block',
+            whiteSpace: 'normal',
+            wordBreak: 'break-word',
+            lineHeight: '1.4'
+          }}
+        >
           {domain}
         </Tag>
       ),
@@ -232,19 +328,21 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
       dataIndex: 'contact_platform',
       key: 'contact_platform',
       width: 150,
+      render: (text) => <Text ellipsis={{ tooltip: text }}>{text}</Text>,
     },
     {
       title: 'Location',
       dataIndex: 'location',
       key: 'location',
       width: 150,
+      render: (text) => <Text ellipsis={{ tooltip: text }}>{text}</Text>,
     },
     {
       title: 'Created Date',
       dataIndex: 'created_at',
       key: 'created_at',
       width: 150,
-      render: (date: string) => dayjs(date).format('DD-MMM-YYYY'),
+      render: (date: string) => <Text>{dayjs(date).format('DD-MMM-YYYY')}</Text>,
       sorter: true,
     },
     {
@@ -252,7 +350,7 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
       dataIndex: 'last_contact_date',
       key: 'last_contact_date',
       width: 150,
-      render: (date: string) => dayjs(date).format('DD-MMM-YYYY'),
+      render: (date: string) => <Text>{dayjs(date).format('DD-MMM-YYYY')}</Text>,
       sorter: true,
     },
     {
@@ -260,49 +358,53 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
       dataIndex: 'note',
       key: 'note',
       width: 300,
-      ellipsis: true,
+      render: (text) => <Text ellipsis={{ tooltip: text }}>{text}</Text>,
     },
     {
       title: 'Actions',
       key: 'actions',
       fixed: 'right',
-      width: 80,
+      width: 70,
       render: (_, record) => (
-        <Dropdown
-          menu={{
-            items: [
-              {
-                key: 'edit',
-                label: 'Edit',
-                icon: <EditOutlined />,
-                onClick: () => handleEdit(record),
-              },
-              {
-                key: 'delete',
-                label: 'Delete',
-                icon: <DeleteOutlined />,
-                danger: true,
-                onClick: () => handleDelete(record),
-              },
-            ],
-          }}
-          trigger={['click']}
-          placement="bottomRight"
-        >
-          <Button 
-            type="text" 
-            icon={<MoreOutlined />} 
-            className="border-0 shadow-none"
-            style={{ 
-              borderRadius: '50%', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              width: '32px',
-              height: '32px'
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <Dropdown
+            menu={{
+              items: [
+                {
+                  key: 'edit',
+                  label: 'Edit',
+                  icon: <EditOutlined />,
+                  onClick: () => handleEdit(record),
+                },
+                {
+                  key: 'delete',
+                  label: 'Delete',
+                  icon: <DeleteOutlined />,
+                  danger: true,
+                  onClick: () => handleDelete(record),
+                },
+              ],
             }}
-          />
-        </Dropdown>
+            trigger={['click']}
+            placement="bottomRight"
+          >
+            <Button 
+              type="text" 
+              icon={<MoreOutlined />} 
+              className="border-0 shadow-none"
+              style={{ 
+                borderRadius: '50%', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                width: '28px',
+                height: '28px',
+                padding: 0,
+                minWidth: 'auto'
+              }}
+            />
+          </Dropdown>
+        </div>
       ),
     },
   ];
@@ -312,6 +414,7 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
       <Card 
         className="shadow-sm" 
         bodyStyle={{ padding: '12px 16px' }}
+        style={{ width: '100%' }}
       >
         <Table<Lead>
           columns={columns}
@@ -320,9 +423,11 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
           loading={loading}
           pagination={pagination}
           onChange={handleTableChange}
-          scroll={{ x: '100%', y: 'calc(100vh - 340px)' }}
+          scroll={{ x: 1800, y: 'calc(100vh - 340px)' }}
           size="middle"
           bordered
+          style={{ width: '100%' }}
+          tableLayout="fixed"
         />
       </Card>
 

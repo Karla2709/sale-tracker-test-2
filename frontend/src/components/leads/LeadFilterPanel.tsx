@@ -1,30 +1,50 @@
 import React, { useState } from 'react';
-import { Card, Input, Select, Button, Space, DatePicker } from 'antd';
-import { SearchOutlined, PlusOutlined, FilterOutlined } from '@ant-design/icons';
+import { Card, Input, Row, Col, Select, DatePicker, Button, Space, Typography, Divider } from 'antd';
+import { SearchOutlined, FilterOutlined, ReloadOutlined, CalendarOutlined, PlusOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
+import type { Dayjs } from 'dayjs';
 
 const { RangePicker } = DatePicker;
-const { Option } = Select;
-
-interface LeadFilterPanelProps {
-  onSearch: (filters: FilterValues) => void;
-  onAddNew: () => void;
-}
+const { Text } = Typography;
 
 export interface FilterValues {
   searchText: string;
-  statusFilter?: string;
-  domainFilter?: string;
-  dateRange?: [any, any] | null;
+  statusFilter: string[] | string | undefined;
+  domainFilter: string[] | string | undefined;
+  dateRange: [Dayjs, Dayjs] | null;
 }
 
-export const LeadFilterPanel: React.FC<LeadFilterPanelProps> = ({ onSearch, onAddNew }) => {
+interface LeadFilterPanelProps {
+  onFilter: (values: FilterValues) => void;
+  onAddNew: () => void;
+}
+
+const statusOptions = [
+  { value: 'New', label: 'New' },
+  { value: 'Reached Out', label: 'Reached Out' },
+  { value: 'Meeting Scheduled', label: 'Meeting Scheduled' },
+  { value: 'First Meeting Complete', label: 'First Meeting Complete' },
+  { value: 'Second Meeting Completed', label: 'Second Meeting Completed' },
+  { value: 'In Dilligence', label: 'In Dilligence' },
+  { value: 'Close Deal', label: 'Close Deal' },
+  { value: 'Prospect Decline', label: 'Prospect Decline' },
+];
+
+const domainOptions = [
+  { value: 'Container Shipping', label: 'Container Shipping' },
+  { value: 'Ecommerce', label: 'Ecommerce' },
+  { value: 'Healthcare', label: 'Healthcare' },
+  { value: 'Others', label: 'Others' },
+];
+
+export const LeadFilterPanel: React.FC<LeadFilterPanelProps> = ({ onFilter, onAddNew }) => {
   const [searchText, setSearchText] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string | undefined>();
-  const [domainFilter, setDomainFilter] = useState<string | undefined>();
-  const [dateRange, setDateRange] = useState<[any, any] | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string[] | undefined>(undefined);
+  const [domainFilter, setDomainFilter] = useState<string[] | undefined>(undefined);
+  const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null);
 
   const handleSearch = () => {
-    onSearch({
+    onFilter({
       searchText,
       statusFilter,
       domainFilter,
@@ -38,7 +58,7 @@ export const LeadFilterPanel: React.FC<LeadFilterPanelProps> = ({ onSearch, onAd
     setDomainFilter(undefined);
     setDateRange(null);
     
-    onSearch({
+    onFilter({
       searchText: '',
       statusFilter: undefined,
       domainFilter: undefined,
@@ -47,82 +67,109 @@ export const LeadFilterPanel: React.FC<LeadFilterPanelProps> = ({ onSearch, onAd
   };
 
   return (
-    <Card className="mb-6 shadow-sm">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-        <div className="flex items-center mb-4 sm:mb-0">
-          <FilterOutlined className="mr-2 text-blue-500" />
-          <span className="text-lg font-medium">Search & Filter</span>
-        </div>
-        <Button 
-          type="primary" 
-          icon={<PlusOutlined />} 
-          onClick={onAddNew}
-          size="middle"
-          className="self-end sm:self-auto"
-        >
-          Add New Lead
-        </Button>
+    <Card 
+      className="shadow-sm mb-4" 
+      bodyStyle={{ padding: '16px 25px' }}
+    >
+      <div className="flex items-center mb-3">
+        <FilterOutlined className="mr-2 text-blue-500" />
+        <span className="text-lg font-medium">Search & Filter</span>
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div>
+      {/* First line: Search input and buttons */}
+      <Row gutter={[16, 16]} className="mb-3">
+        <Col xs={24} sm={24} md={16} lg={18} xl={18}>
           <Input
-            placeholder="Search leads..."
+            placeholder="Search by name, email, phone..."
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             prefix={<SearchOutlined />}
+            onPressEnter={handleSearch}
             allowClear
+            size="middle"
           />
-        </div>
-        <div>
+        </Col>
+        
+        <Col xs={24} sm={24} md={8} lg={6} xl={6}>
+          <div className="flex justify-end">
+            <Space>
+              <Button 
+                type="primary" 
+                icon={<FilterOutlined />} 
+                onClick={handleSearch}
+              >
+                Filter
+              </Button>
+              <Button 
+                icon={<ReloadOutlined />} 
+                onClick={handleReset}
+              >
+                Reset
+              </Button>
+              <Button 
+                type="primary" 
+                icon={<PlusOutlined />} 
+                onClick={onAddNew}
+              >
+                Add New
+              </Button>
+            </Space>
+          </div>
+        </Col>
+      </Row>
+      
+      <Divider style={{ margin: '8px 0' }} />
+      
+      {/* Second line: Filter options */}
+      <Row gutter={[16, 16]}>
+        <Col xs={24} sm={12} md={6} lg={6} xl={6}>
+          <div className="mb-1">
+            <Text type="secondary" strong>Status</Text>
+          </div>
           <Select
-            placeholder="Status"
-            style={{ width: '100%' }}
+            placeholder="Filter by status"
             value={statusFilter}
             onChange={setStatusFilter}
-            allowClear
-          >
-            <Option value="New">New</Option>
-            <Option value="Reached Out">Reached Out</Option>
-            <Option value="Meeting Scheduled">Meeting Scheduled</Option>
-            <Option value="First Meeting Complete">First Meeting Complete</Option>
-            <Option value="Second Meeting Completed">Second Meeting Completed</Option>
-            <Option value="In Dilligence">In Dilligence</Option>
-            <Option value="Close Deal">Close Deal</Option>
-            <Option value="Prospect Decline">Prospect Decline</Option>
-          </Select>
-        </div>
-        <div>
-          <Select
-            placeholder="Client Domain"
             style={{ width: '100%' }}
+            options={statusOptions}
+            allowClear
+            showSearch
+            mode="multiple"
+            maxTagCount={1}
+          />
+        </Col>
+        
+        <Col xs={24} sm={12} md={6} lg={6} xl={6}>
+          <div className="mb-1">
+            <Text type="secondary" strong>Client Domain</Text>
+          </div>
+          <Select
+            placeholder="Filter by domain"
             value={domainFilter}
             onChange={setDomainFilter}
+            style={{ width: '100%' }}
+            options={domainOptions}
             allowClear
-          >
-            <Option value="Container Shipping">Container Shipping</Option>
-            <Option value="Ecommerce">Ecommerce</Option>
-            <Option value="Healthcare">Healthcare</Option>
-            <Option value="Others">Others</Option>
-          </Select>
-        </div>
-        <div>
-          <RangePicker 
-            style={{ width: '100%' }} 
-            value={dateRange}
-            onChange={setDateRange}
+            showSearch
+            mode="multiple"
+            maxTagCount={1}
           />
-        </div>
-      </div>
-      
-      <div className="flex justify-end mt-4">
-        <Space>
-          <Button onClick={handleReset}>Reset</Button>
-          <Button type="primary" onClick={handleSearch}>
-            Search
-          </Button>
-        </Space>
-      </div>
+        </Col>
+        
+        <Col xs={24} sm={24} md={12} lg={12} xl={12}>
+          <Space direction="vertical" size={4} style={{ width: '100%' }}>
+            <Text type="secondary" strong style={{ display: 'flex', alignItems: 'center' }}>
+              <CalendarOutlined style={{ marginRight: 4 }} /> Last Contact Date Range
+            </Text>
+            <RangePicker
+              value={dateRange}
+              onChange={(dates) => setDateRange(dates as [Dayjs, Dayjs] | null)}
+              style={{ width: '100%' }}
+              allowClear
+            />
+          </Space>
+        </Col>
+      </Row>
     </Card>
   );
 }; 

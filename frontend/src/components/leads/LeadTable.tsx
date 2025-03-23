@@ -26,13 +26,13 @@ interface LeadTableProps {
 const getStatusColor = (status: string): string => {
   const colors: { [key: string]: string } = {
     'New': '#808080', // gray
-    'Reached Out': '#87CEEB', // light blue
-    'Meeting Scheduled': '#0000FF', // blue
-    'First Meeting Complete': '#FFFFE0', // light yellow
-    'Second Meeting Completed': '#FFFF00', // yellow
-    'In Dilligence': '#FFA500', // orange
-    'Close Deal': '#008000', // green
-    'Prospect Decline': '#FF0000', // red
+    'Reached Out': '#9370DB', // medium purple
+    'Meeting Scheduled': '#F8C471', // light orange
+    'First Meeting Complete': '#85C1E9', // light blue
+    'Second Meeting Completed': '#76D7C4', // light teal
+    'In Dilligence': '#F0B27A', // light brown
+    'Close Deal': '#7DCEA0', // light green
+    'Prospect Decline': '#F1948A', // light red
   };
   return colors[status] || '#808080';
 };
@@ -73,13 +73,21 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
       if (filters) {
         setCurrentFilters(filters);
       }
+
+      // Helper function to handle arrays for filters
+      const getFilterParams = (filter: string[] | string | undefined) => {
+        if (Array.isArray(filter)) {
+          return filter.join(',');
+        }
+        return filter;
+      };
       
       const queryParams = new URLSearchParams({
         page: params.page?.toString() || pagination.current.toString(),
         pageSize: params.pageSize?.toString() || pagination.pageSize.toString(),
         ...(activeFilters.searchText && { search: activeFilters.searchText }),
-        ...(activeFilters.statusFilter && { status: activeFilters.statusFilter }),
-        ...(activeFilters.domainFilter && { client_domain: activeFilters.domainFilter }),
+        ...(activeFilters.statusFilter && { status: getFilterParams(activeFilters.statusFilter) }),
+        ...(activeFilters.domainFilter && { client_domain: getFilterParams(activeFilters.domainFilter) }),
         ...(activeFilters.dateRange?.[0] && { startDate: activeFilters.dateRange[0].toISOString() }),
         ...(activeFilters.dateRange?.[1] && { endDate: activeFilters.dateRange[1].toISOString() }),
       });
@@ -137,7 +145,7 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
       fixed: 'left',
       width: 150,
       render: (status: string) => (
-        <Tag color={getStatusColor(status)} style={{ color: '#000' }}>
+        <Tag color={getStatusColor(status)} style={{ color: '#333', padding: '2px 8px', borderRadius: '12px', fontWeight: 500 }}>
           {status}
         </Tag>
       ),
@@ -160,7 +168,7 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
       key: 'client_domain',
       width: 150,
       render: (domain: string) => (
-        <Tag color={getDomainColor(domain)} style={{ color: '#000' }}>
+        <Tag color={getDomainColor(domain)} style={{ color: '#333', padding: '2px 8px', borderRadius: '12px', fontWeight: 500 }}>
           {domain}
         </Tag>
       ),
@@ -203,7 +211,10 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
   ];
 
   return (
-    <Card className="shadow-sm">
+    <Card 
+      className="shadow-sm" 
+      bodyStyle={{ padding: '16px 25px' }}
+    >
       <Table<Lead>
         columns={columns}
         dataSource={data}
@@ -211,7 +222,7 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
         loading={loading}
         pagination={pagination}
         onChange={handleTableChange}
-        scroll={{ x: '100%', y: 'calc(100vh - 400px)' }}
+        scroll={{ x: '100%', y: 'calc(100vh - 380px)' }}
         size="middle"
         bordered
       />

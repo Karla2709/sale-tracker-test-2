@@ -1,4 +1,4 @@
-# Sales Tracker MVP
+# Sales Tracker MVP (v0.0.1)
 
 A SaaS tool for tracking potential clients in the IT consulting sector, focusing on Container Shipping, Ecommerce, Healthcare and other industries.
 
@@ -8,6 +8,7 @@ A SaaS tool for tracking potential clients in the IT consulting sector, focusing
 - Lead management with status tracking
 - Comprehensive filtering and search capabilities
 - Color-coded status and domain visualization
+- Improved UI/UX with separate search and filter panels
 
 ## Tech Stack
 
@@ -94,7 +95,7 @@ The application now includes a comprehensive lead management system with the fol
 - **Lead Table**: View, filter, and sort all leads in a single table
 - **Status Tracking**: Track leads through various stages (New, Reached Out, Meeting Scheduled, etc.)
 - **Color Coding**: Visual indicators for lead status and client domain
-- **Search and Filtering**: Search by name, email, or phone; filter by status, client domain, and date range
+- **Search and Filtering**: Two-line search and filter panel with multi-select filters
 - **Add New Leads**: Form to add new leads with validation
 
 ### Lead Statuses
@@ -118,6 +119,15 @@ Leads are categorized into the following domains:
 - Ecommerce
 - Healthcare
 - Others
+
+## UI Improvements (v0.0.1)
+
+- Separated search and filter UI into two lines for better organization
+- Added multi-select functionality to status and domain filters
+- Improved status tag colors for better visual distinction
+- Enhanced date range picker with clear label
+- Reorganized action buttons for better usability
+- Mobile-responsive design with appropriate breakpoints
 
 ## API Endpoints
 
@@ -146,6 +156,7 @@ sales-tracker-mvp/
 │   ├── src/
 │   │   ├── app/            # Next.js app router
 │   │   ├── components/     # React components
+│   │   ├── hooks/          # Custom React hooks
 │   │   ├── lib/            # Utility functions
 │   │   └── styles/         # CSS styles
 │   └── package.json

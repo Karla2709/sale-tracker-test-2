@@ -1,119 +1,184 @@
-# Local Development Guide
+# Local Development Guide for Sales Tracker (v0.0.1)
 
-This guide will help you set up and run the Sale Tracker application locally.
+## Starting the Application
 
-## Prerequisites
+For local development, you need to run Supabase, the backend server, and the frontend application.
 
-- Node.js (v16+)
-- npm or yarn
-- Docker (for local Supabase)
-
-## Starting the Applications
-
-### 1. Start Supabase (Database)
+### 1. Starting Supabase
 
 ```bash
+# Start Supabase services
 npx supabase start
+
+# If there are database changes to apply
+npx supabase db reset
 ```
 
-Supabase URLs and endpoints:
-- Studio (Admin UI): http://127.0.0.1:54323
-- API URL: http://127.0.0.1:54321
-- Database URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+### 2. Starting the Backend Server
 
-### 2. Start Backend Server
+```bash
+# Navigate to the backend directory
+cd backend
+
+# Install dependencies (if not already installed)
+npm install
+
+# Start the development server
+npm run dev
+```
+
+The backend should start on port 3001 by default.
+
+### 3. Starting the Frontend Application
+
+```bash
+# Navigate to the frontend directory
+cd frontend
+
+# Install dependencies (if not already installed)
+npm install
+
+# Start the development server
+npm run dev
+```
+
+The frontend should start on port 3000 by default.
+
+## Restarting the Complete Application
+
+If you need to restart all components of the application, follow these steps:
+
+### 1. Stop all running processes
+
+```bash
+# Kill any Node.js processes
+pkill -f node
+
+# Or more specifically, kill processes running on the application ports
+lsof -i :3000-3002 | awk 'NR>1 {print $2}' | xargs -r kill -9
+```
+
+### 2. Restart Supabase (if needed)
+
+```bash
+# Stop Supabase
+npx supabase stop
+
+# Start Supabase again
+npx supabase start
+
+# Optional: Reset the database
+npx supabase db reset
+```
+
+### 3. Restart the Backend
 
 ```bash
 cd backend
 npm run dev
 ```
 
-Backend URLs and endpoints:
-- Base URL: http://localhost:3001
-- Health Check: http://localhost:3001/api/health
-
-### 3. Start Frontend Application
+### 4. Restart the Frontend
 
 ```bash
+# In a new terminal
 cd frontend
 npm run dev
 ```
 
-Frontend URLs and pages:
-- Home Page: http://localhost:3000
-- Dashboard: http://localhost:3000/dashboard
-- Settings: http://localhost:3000/dashboard/settings
-
-## Application Structure
-
-```
-sale-tracker/
-├── frontend/               # Next.js frontend
-│   ├── src/
-│   │   ├── app/           # Next.js app router pages
-│   │   ├── components/    # React components
-│   │   └── lib/          # Utilities and configurations
-│   └── public/           # Static assets
-│
-├── backend/              # Node.js backend
-│   ├── src/
-│   │   ├── config/      # Configuration files
-│   │   ├── controllers/ # API controllers
-│   │   ├── routes/      # API routes
-│   │   └── services/    # Business logic
-│   └── package.json
-│
-└── supabase/            # Supabase configuration
-    ├── migrations/      # Database migrations
-    └── seed.sql        # Seed data
-
-```
-
 ## Environment Variables
 
-### Backend (.env)
-```env
+### Backend (.env file in backend directory)
+
+```
+# Server configuration
 PORT=3001
+
+# Supabase configuration
 SUPABASE_URL=http://127.0.0.1:54321
-SUPABASE_ANON_KEY=<your-anon-key>
-SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
+
+# Other configuration
 NODE_ENV=development
 ```
 
-### Frontend (.env.local)
-```env
+### Frontend (.env.local file in frontend directory)
+
+```
+# Supabase Connection
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+
+# API Configuration
 NEXT_PUBLIC_API_URL=http://localhost:3001
 ```
 
-## Development Workflow
+## Application Structure
 
-1. Start all services in the following order:
-   - Supabase
-   - Backend
-   - Frontend
+- **Frontend**: Next.js application with Ant Design and Tailwind CSS
+- **Backend**: Express API server with TypeScript
+- **Database**: PostgreSQL managed by Supabase
 
-2. Access the application:
-   - Start at http://localhost:3000
-   - Navigate to Dashboard using the "Go to Dashboard" button
-   - Access Settings from the sidebar menu
+## Accessing the Application
 
-3. Database Management:
-   - Use Supabase Studio at http://127.0.0.1:54323 for database management
-   - Run migrations: `npx supabase db reset`
-   - Export schema: `npm run export-sql`
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:3001
+- Supabase Studio: http://127.0.0.1:54323
 
-## Troubleshooting
+## Common Issues and Troubleshooting
 
-1. If you encounter build errors:
-   - Clear Next.js cache: `cd frontend && rm -rf .next`
-   - Restart the frontend application
+### Build Errors
 
-2. If database connection fails:
-   - Ensure Supabase is running: `npx supabase status`
-   - Check environment variables match Supabase output
+If you encounter build errors, try:
 
-3. If API calls fail:
-   - Verify backend is running on port 3001
-   - Check API URL in frontend environment variables 
+```bash
+# Clean node_modules and reinstall
+rm -rf node_modules
+npm install
+
+# Clear Next.js cache (for frontend)
+rm -rf .next
+```
+
+### Database Connection Errors
+
+Check that Supabase is running:
+
+```bash
+npx supabase status
+```
+
+If there are issues, restart Supabase:
+
+```bash
+npx supabase stop
+npx supabase start
+```
+
+### Port Conflicts
+
+If ports are already in use, you can:
+
+1. Kill the processes using those ports:
+   ```bash
+   lsof -i :3000-3002 | awk 'NR>1 {print $2}' | xargs -r kill -9
+   ```
+
+2. Or modify the ports in:
+   - Frontend: `next.config.js`
+   - Backend: `.env` file (PORT variable)
+
+### API Connection Issues
+
+If the frontend can't connect to the backend, check:
+
+1. The backend is running on the expected port
+2. The `NEXT_PUBLIC_API_URL` in frontend's `.env.local` is correct
+3. There are no CORS issues (check backend logs)
+
+## Development Tips
+
+- Use the Supabase Studio at http://127.0.0.1:54323 to manage your database
+- The backend has hot-reloading enabled for faster development
+- The frontend uses Next.js App Router for modern React development patterns 

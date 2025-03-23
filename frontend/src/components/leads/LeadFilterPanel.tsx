@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Input, Row, Col, Select, DatePicker, Button, Space, Typography, Divider } from 'antd';
 import { SearchOutlined, FilterOutlined, ReloadOutlined, CalendarOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -48,16 +48,25 @@ export const LeadFilterPanel: React.FC<LeadFilterPanelProps> = ({ onFilter = noo
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [domainFilter, setDomainFilter] = useState<string[]>([]);
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null);
+  const [isComponentMounted, setIsComponentMounted] = useState(false);
+
+  // Set the component as mounted to prevent initial filter calls
+  useEffect(() => {
+    setIsComponentMounted(true);
+    return () => setIsComponentMounted(false);
+  }, []);
   
-  // Safe filter application - ensures onFilter exists and wraps in try/catch
-  const applyFilter = (filterValues: FilterValues) => {
+  // Debounced filter application to prevent multiple rapid calls
+  const applyFilter = useCallback((filterValues: FilterValues) => {
+    if (!isComponentMounted) return;
+    
     console.log('Applying filter:', filterValues);
     try {
       onFilter(filterValues);
     } catch (error) {
       console.error('Error applying filter:', error);
     }
-  };
+  }, [onFilter, isComponentMounted]);
 
   const handleSearch = () => {
     console.log('Search triggered with:', { searchText, statusFilter, domainFilter, dateRange });

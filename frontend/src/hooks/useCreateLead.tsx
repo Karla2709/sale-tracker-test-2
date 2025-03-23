@@ -42,8 +42,8 @@ export const useCreateLead = ({ onSuccess }: UseCreateLeadProps = {}) => {
   }) => {
     try {
       setLoading(true);
-      // Hardcode the API URL
-      const apiUrl = 'http://localhost:3001';
+      // Use environment variables for API URL
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
       const response = await fetch(`${apiUrl}/api/leads`, {
         method: 'POST',
         headers: {

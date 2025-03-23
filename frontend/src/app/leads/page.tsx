@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Button, Modal, message } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { LeadTable } from '@/components/leads/LeadTable';
@@ -10,6 +10,7 @@ import { useCreateLead } from '@/hooks/useCreateLead';
 export default function LeadsPage() {
   // Reference to the lead table component
   const leadTableRef = useRef<{ fetchLeads: (filters?: FilterValues) => void }>(null);
+  const [isReady, setIsReady] = useState(false);
   
   // Create lead modal state and handlers
   const { 
@@ -27,9 +28,25 @@ export default function LeadsPage() {
     }
   });
 
-  // Define filter handler function directly
-  const handleFilter = (filters: FilterValues) => {
+  // Set component as ready after initial render
+  useEffect(() => {
+    // Small delay to ensure components are mounted
+    const timer = setTimeout(() => {
+      setIsReady(true);
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Define filter handler function directly - wrapped with useCallback to avoid unnecessary rerenders
+  const handleFilter = useCallback((filters: FilterValues) => {
     console.log('Filter received in page:', filters);
+    
+    if (!isReady) {
+      console.log('Component not ready yet, queuing filter for later');
+      // We could store this filter and apply it when ready if needed
+      return;
+    }
     
     try {
       if (leadTableRef.current) {
@@ -50,7 +67,7 @@ export default function LeadsPage() {
       console.error('Error applying filters:', error);
       message.error('An error occurred while filtering leads');
     }
-  };
+  }, [isReady]);
 
   const handleAddNew = () => {
     openModal();

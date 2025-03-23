@@ -59,8 +59,8 @@ const useEditLead = ({ onSuccess }: { onSuccess?: () => void }) => {
     
     try {
       setLoading(true);
-      // Hardcode the API URL
-      const apiUrl = 'http://localhost:3001';
+      // Use environment variables for API URL
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
       const response = await fetch(`${apiUrl}/api/leads/${currentLead.id}`, {
         method: 'PUT',
         headers: {
@@ -198,8 +198,8 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
 
       console.log('Fetching leads with params:', queryParams.toString());
       
-      // Hardcode the API URL to ensure it's correct
-      const apiUrl = 'http://localhost:3001';
+      // Use environment variables for API URL
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
       const url = `${apiUrl}/api/leads?${queryParams.toString()}`;
       console.log('API URL:', url);
       
@@ -250,29 +250,41 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
   useImperativeHandle(ref, () => ({
     fetchLeads: (filters?: FilterValues) => {
       console.log('fetchLeads called via ref with filters:', filters);
-      return fetchLeads(filters);
+      return fetchLeads(filters).catch(err => {
+        console.error('Error during fetchLeads called from ref:', err);
+      });
     },
   }), []);
 
+  // Load leads when component mounts
   useEffect(() => {
     console.log('LeadTable mounted, fetching initial data');
-    fetchLeads();
     
-    // Expose a global debug function to allow manual refreshing in case of issues
+    // Small delay to ensure everything is properly initialized
+    const timer = setTimeout(() => {
+      fetchLeads().catch(err => {
+        console.error('Error during initial data fetch:', err);
+      });
+    }, 500);
+    
+    // Expose a global debug function for manual refreshing
     if (typeof window !== 'undefined') {
       (window as any).__refreshLeads = () => {
         console.log('Manual refresh triggered');
-        fetchLeads();
+        fetchLeads().catch(err => {
+          console.error('Error during manual refresh:', err);
+        });
       };
     }
     
     return () => {
-      // Clean up if needed
+      clearTimeout(timer);
+      // Clean up
       if (typeof window !== 'undefined') {
         delete (window as any).__refreshLeads;
       }
     };
-  }, []); // Initial fetch
+  }, []);
 
   const handleTableChange = (newPagination: any, filters: any, sorter: any) => {
     fetchLeads(undefined, {
@@ -301,8 +313,8 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
     
     try {
       setLoading(true);
-      // Hardcode the API URL
-      const apiUrl = 'http://localhost:3001';
+      // Use environment variables for API URL
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
       const response = await fetch(`${apiUrl}/api/leads/${selectedLead.id}`, {
         method: 'DELETE',
       });

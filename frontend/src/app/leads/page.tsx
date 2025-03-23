@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from 'react';
+import React, { useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Row, Col, Modal, message } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
@@ -19,11 +19,19 @@ export default function LeadsPage() {
     }
   });
 
-  const handleFilter = (filters: FilterValues) => {
+  const handleFilter = useCallback((filters: FilterValues) => {
+    console.log('Filter received in page:', filters);
     if (leadTableRef.current) {
-      leadTableRef.current.fetchLeads(filters);
+      // Make sure to normalize arrays for multi-selects
+      const normalizedFilters = {
+        ...filters,
+        statusFilter: filters.statusFilter || [],
+        domainFilter: filters.domainFilter || []
+      };
+      
+      leadTableRef.current.fetchLeads(normalizedFilters);
     }
-  };
+  }, []);
 
   const handleAddNew = () => {
     openModal();

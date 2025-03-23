@@ -160,14 +160,6 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
         setCurrentFilters(filters);
       }
 
-      // Helper function to handle arrays for filters
-      const getFilterParams = (filter: string[]): string => {
-        if (filter.length > 0) {
-          return filter.join(',');
-        }
-        return '';
-      };
-      
       // Build query parameters
       const queryParams = new URLSearchParams();
       
@@ -180,14 +172,16 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
         queryParams.append('search', activeFilters.searchText);
       }
       
-      // Add status filter
-      if (activeFilters.statusFilter.length > 0) {
-        queryParams.append('status', getFilterParams(activeFilters.statusFilter));
+      // Add status filter - handle array properly
+      if (activeFilters.statusFilter && activeFilters.statusFilter.length > 0) {
+        // Convert array to comma-separated string
+        queryParams.append('status', activeFilters.statusFilter.join(','));
       }
       
-      // Add domain filter
-      if (activeFilters.domainFilter.length > 0) {
-        queryParams.append('client_domain', getFilterParams(activeFilters.domainFilter));
+      // Add domain filter - handle array properly
+      if (activeFilters.domainFilter && activeFilters.domainFilter.length > 0) {
+        // Convert array to comma-separated string
+        queryParams.append('client_domain', activeFilters.domainFilter.join(','));
       }
       
       // Add date range filters
@@ -204,10 +198,13 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
       // Use the full API URL instead of relying on proxying
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
       const response = await fetch(`${apiUrl}/api/leads?${queryParams.toString()}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch leads');
+      }
+      
       const result = await response.json();
-
-      if (!response.ok) throw new Error(result.error || 'Failed to fetch leads');
-
       console.log('Received data:', result);
 
       setData(result.data);

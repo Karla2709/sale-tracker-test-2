@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Card, Input, Row, Col, Select, DatePicker, Button, Space, Typography, Divider } from 'antd';
 import { SearchOutlined, FilterOutlined, ReloadOutlined, CalendarOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -44,9 +44,23 @@ export const LeadFilterPanel: React.FC<LeadFilterPanelProps> = ({ onFilter }) =>
   const [domainFilter, setDomainFilter] = useState<string[]>([]);
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null);
 
+  // Safe filter application - ensures onFilter is a function and wraps in try/catch
+  const applyFilter = useCallback((filterValues: FilterValues) => {
+    console.log('Applying filter:', filterValues);
+    if (typeof onFilter === 'function') {
+      try {
+        onFilter(filterValues);
+      } catch (error) {
+        console.error('Error applying filter:', error);
+      }
+    } else {
+      console.error('onFilter is not a function');
+    }
+  }, [onFilter]);
+
   const handleSearch = () => {
     console.log('Search triggered with:', { searchText, statusFilter, domainFilter, dateRange });
-    onFilter({
+    applyFilter({
       searchText,
       statusFilter,
       domainFilter,
@@ -63,14 +77,51 @@ export const LeadFilterPanel: React.FC<LeadFilterPanelProps> = ({ onFilter }) =>
     
     // Trigger the filter with reset values
     console.log('Reset triggered, clearing all filters');
-    setTimeout(() => {
-      onFilter({
-        searchText: '',
-        statusFilter: [],
-        domainFilter: [],
-        dateRange: null,
-      });
-    }, 0);
+    applyFilter({
+      searchText: '',
+      statusFilter: [],
+      domainFilter: [],
+      dateRange: null,
+    });
+  };
+
+  // Handler for status filter change
+  const handleStatusChange = (value: string[]) => {
+    console.log('Status filter changed:', value);
+    setStatusFilter(value);
+    applyFilter({
+      searchText,
+      statusFilter: value,
+      domainFilter,
+      dateRange,
+    });
+  };
+
+  // Handler for domain filter change
+  const handleDomainChange = (value: string[]) => {
+    console.log('Domain filter changed:', value);
+    setDomainFilter(value);
+    applyFilter({
+      searchText,
+      statusFilter,
+      domainFilter: value,
+      dateRange,
+    });
+  };
+
+  // Handler for date range change
+  const handleDateRangeChange = (
+    dates: any, 
+    dateStrings: [string, string]
+  ) => {
+    const typedDates = dates as [Dayjs, Dayjs] | null;
+    setDateRange(typedDates);
+    applyFilter({
+      searchText,
+      statusFilter,
+      domainFilter,
+      dateRange: typedDates,
+    });
   };
 
   return (
@@ -126,16 +177,7 @@ export const LeadFilterPanel: React.FC<LeadFilterPanelProps> = ({ onFilter }) =>
           <Select
             placeholder="Filter by status"
             value={statusFilter}
-            onChange={(value) => {
-              setStatusFilter(value);
-              console.log('Status filter changed:', value);
-              onFilter({
-                searchText,
-                statusFilter: value || [],
-                domainFilter,
-                dateRange,
-              });
-            }}
+            onChange={handleStatusChange}
             style={{ width: '100%' }}
             options={statusOptions}
             allowClear
@@ -152,16 +194,7 @@ export const LeadFilterPanel: React.FC<LeadFilterPanelProps> = ({ onFilter }) =>
           <Select
             placeholder="Filter by domain"
             value={domainFilter}
-            onChange={(value) => {
-              setDomainFilter(value);
-              console.log('Domain filter changed:', value);
-              onFilter({
-                searchText,
-                statusFilter,
-                domainFilter: value || [],
-                dateRange,
-              });
-            }}
+            onChange={handleDomainChange}
             style={{ width: '100%' }}
             options={domainOptions}
             allowClear
@@ -178,16 +211,7 @@ export const LeadFilterPanel: React.FC<LeadFilterPanelProps> = ({ onFilter }) =>
             </Text>
             <RangePicker
               value={dateRange}
-              onChange={(dates) => {
-                const typedDates = dates as [Dayjs, Dayjs] | null;
-                setDateRange(typedDates);
-                onFilter({
-                  searchText,
-                  statusFilter,
-                  domainFilter,
-                  dateRange: typedDates,
-                });
-              }}
+              onChange={handleDateRangeChange}
               style={{ width: '100%' }}
               allowClear
             />

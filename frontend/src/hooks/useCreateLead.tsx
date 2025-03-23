@@ -30,10 +30,20 @@ export const useCreateLead = ({ onSuccess }: UseCreateLeadProps = {}) => {
     setModalOpen(false);
   };
 
-  const handleSubmit = async (values: Lead) => {
+  const handleSubmit = async (values: {
+    name: string;
+    email: string;
+    phone: string;
+    status: string;
+    client_domain: string;
+    contact_platform: string;
+    location: string;
+    note?: string;
+  }) => {
     try {
       setLoading(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      // Hardcode the API URL
+      const apiUrl = 'http://localhost:3001';
       const response = await fetch(`${apiUrl}/api/leads`, {
         method: 'POST',
         headers: {

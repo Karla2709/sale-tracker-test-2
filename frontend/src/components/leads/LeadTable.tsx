@@ -59,7 +59,8 @@ const useEditLead = ({ onSuccess }: { onSuccess?: () => void }) => {
     
     try {
       setLoading(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      // Hardcode the API URL
+      const apiUrl = 'http://localhost:3001';
       const response = await fetch(`${apiUrl}/api/leads/${currentLead.id}`, {
         method: 'PUT',
         headers: {
@@ -197,8 +198,8 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
 
       console.log('Fetching leads with params:', queryParams.toString());
       
-      // Use the full API URL instead of relying on proxying
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      // Hardcode the API URL to ensure it's correct
+      const apiUrl = 'http://localhost:3001';
       const url = `${apiUrl}/api/leads?${queryParams.toString()}`;
       console.log('API URL:', url);
       
@@ -219,18 +220,23 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
       const result = await response.json();
       console.log('Received data:', result);
 
-      if (!result.data || !Array.isArray(result.data)) {
-        console.error('Invalid response format. Expected array in data property:', result);
+      // Ensure we have valid data
+      if (!result.data) {
+        console.error('No data property in response:', result);
         message.error('Invalid data format received from server');
         return;
       }
+      
+      // If data is not an array, wrap it in an array
+      const leadData = Array.isArray(result.data) ? result.data : [result.data];
+      console.log('Processed lead data:', leadData);
 
-      setData(result.data);
+      setData(leadData);
       setPagination({
         ...pagination,
-        total: result.total,
-        current: result.page,
-        pageSize: result.pageSize,
+        total: result.total || leadData.length,
+        current: result.page || pagination.current,
+        pageSize: result.pageSize || pagination.pageSize,
       });
     } catch (error) {
       console.error('Error fetching leads:', error);
@@ -240,12 +246,32 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
     }
   };
 
+  // Expose fetchLeads through the ref
   useImperativeHandle(ref, () => ({
-    fetchLeads: (filters?: FilterValues) => fetchLeads(filters),
-  }));
+    fetchLeads: (filters?: FilterValues) => {
+      console.log('fetchLeads called via ref with filters:', filters);
+      return fetchLeads(filters);
+    },
+  }), []);
 
   useEffect(() => {
+    console.log('LeadTable mounted, fetching initial data');
     fetchLeads();
+    
+    // Expose a global debug function to allow manual refreshing in case of issues
+    if (typeof window !== 'undefined') {
+      (window as any).__refreshLeads = () => {
+        console.log('Manual refresh triggered');
+        fetchLeads();
+      };
+    }
+    
+    return () => {
+      // Clean up if needed
+      if (typeof window !== 'undefined') {
+        delete (window as any).__refreshLeads;
+      }
+    };
   }, []); // Initial fetch
 
   const handleTableChange = (newPagination: any, filters: any, sorter: any) => {
@@ -275,7 +301,8 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
     
     try {
       setLoading(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      // Hardcode the API URL
+      const apiUrl = 'http://localhost:3001';
       const response = await fetch(`${apiUrl}/api/leads/${selectedLead.id}`, {
         method: 'DELETE',
       });

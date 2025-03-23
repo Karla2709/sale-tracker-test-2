@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Card, Input, Row, Col, Select, DatePicker, Button, Space, Typography, Divider } from 'antd';
 import { SearchOutlined, FilterOutlined, ReloadOutlined, CalendarOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -43,11 +43,20 @@ export const LeadFilterPanel: React.FC<LeadFilterPanelProps> = ({ onFilter }) =>
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [domainFilter, setDomainFilter] = useState<string[]>([]);
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null);
+  const [isFilterReady, setIsFilterReady] = useState(false);
+  
+  // Check if onFilter is available
+  useEffect(() => {
+    setIsFilterReady(typeof onFilter === 'function');
+    if (typeof onFilter !== 'function') {
+      console.warn('LeadFilterPanel: onFilter prop is not a function');
+    }
+  }, [onFilter]);
 
   // Safe filter application - ensures onFilter is a function and wraps in try/catch
   const applyFilter = useCallback((filterValues: FilterValues) => {
     console.log('Applying filter:', filterValues);
-    if (typeof onFilter === 'function') {
+    if (isFilterReady) {
       try {
         onFilter(filterValues);
       } catch (error) {
@@ -56,7 +65,7 @@ export const LeadFilterPanel: React.FC<LeadFilterPanelProps> = ({ onFilter }) =>
     } else {
       console.error('onFilter is not a function');
     }
-  }, [onFilter]);
+  }, [onFilter, isFilterReady]);
 
   const handleSearch = () => {
     console.log('Search triggered with:', { searchText, statusFilter, domainFilter, dateRange });
@@ -127,7 +136,7 @@ export const LeadFilterPanel: React.FC<LeadFilterPanelProps> = ({ onFilter }) =>
   return (
     <Card 
       className="shadow-sm mb-3" 
-      bodyStyle={{ padding: '16px 25px' }}
+      styles={{ body: { padding: '16px 25px' } }}
       style={{ marginBottom: '8px' }}
     >
       <div className="flex items-center mb-2">

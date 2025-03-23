@@ -160,6 +160,8 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
         setCurrentFilters(filters);
       }
 
+      console.log('fetchLeads called with filters:', activeFilters);
+
       // Build query parameters
       const queryParams = new URLSearchParams();
       
@@ -197,15 +199,31 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
       
       // Use the full API URL instead of relying on proxying
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${apiUrl}/api/leads?${queryParams.toString()}`);
+      const url = `${apiUrl}/api/leads?${queryParams.toString()}`;
+      console.log('API URL:', url);
+      
+      const response = await fetch(url);
+      console.log('Response status:', response.status);
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch leads');
+        let errorMessage = `Failed to fetch leads: ${response.status} ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          console.error('Could not parse error response:', e);
+        }
+        throw new Error(errorMessage);
       }
       
       const result = await response.json();
       console.log('Received data:', result);
+
+      if (!result.data || !Array.isArray(result.data)) {
+        console.error('Invalid response format. Expected array in data property:', result);
+        message.error('Invalid data format received from server');
+        return;
+      }
 
       setData(result.data);
       setPagination({
@@ -216,7 +234,7 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
       });
     } catch (error) {
       console.error('Error fetching leads:', error);
-      message.error('Failed to fetch leads');
+      message.error(`Failed to fetch leads: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
@@ -439,7 +457,7 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
     <>
       <Card 
         className="shadow-sm w-full" 
-        bodyStyle={{ padding: '12px 16px' }}
+        styles={{ body: { padding: '12px 16px' } }}
         style={{ width: '100%', margin: 0 }}
       >
         <Table<Lead>

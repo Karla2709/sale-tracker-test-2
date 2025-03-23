@@ -37,6 +37,7 @@ const useEditLead = ({ onSuccess }: { onSuccess?: () => void }) => {
   const openModal = (lead: Lead) => {
     setCurrentLead(lead);
     setModalOpen(true);
+    form.setFieldsValue(lead);
   };
 
   const closeModal = () => {
@@ -121,7 +122,8 @@ const getDomainColor = (domain: string): string => {
 
 export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => void }, LeadTableProps>(({ onAddNew }, ref) => {
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<Lead[]>([]);
+  const [allData, setAllData] = useState<Lead[]>([]); // Store all data
+  const [filteredData, setFilteredData] = useState<Lead[]>([]); // Store filtered data
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -129,7 +131,7 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
   });
   
   // Store current filters
-  const [currentFilters, setCurrentFilters] = useState<FilterValues>({
+  const [activeFilters, setActiveFilters] = useState<FilterValues>({
     searchText: '',
     statusFilter: [],
     domainFilter: [],
@@ -142,168 +144,156 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
 
   // Use the edit lead hook
   const { 
+    form: editForm,
     modalOpen: editModalOpen, 
     currentLead,
     handleSubmit: handleEditSubmit, 
     openModal: openEditModal, 
     closeModal: closeEditModal 
   } = useEditLead({
-    onSuccess: () => fetchLeads()
+    onSuccess: () => loadAllLeads()
   });
 
-  const fetchLeads = async (filters?: FilterValues, params: any = {}) => {
+  // Fetch all leads from API
+  const loadAllLeads = async () => {
     try {
       setLoading(true);
       
-      // Update current filters if new ones are provided
-      const activeFilters = filters || currentFilters;
-      if (filters) {
-        setCurrentFilters(filters);
-      }
-
-      console.log('fetchLeads called with filters:', activeFilters);
-
-      // Build query parameters
-      const queryParams = new URLSearchParams();
-      
-      // Add pagination
-      queryParams.append('page', params.page?.toString() || pagination.current.toString());
-      queryParams.append('pageSize', params.pageSize?.toString() || pagination.pageSize.toString());
-      
-      // Add search filter
-      if (activeFilters.searchText) {
-        queryParams.append('search', activeFilters.searchText);
-      }
-      
-      // Add status filter - handle array properly
-      if (activeFilters.statusFilter && activeFilters.statusFilter.length > 0) {
-        // Convert array to comma-separated string
-        queryParams.append('status', activeFilters.statusFilter.join(','));
-      }
-      
-      // Add domain filter - handle array properly
-      if (activeFilters.domainFilter && activeFilters.domainFilter.length > 0) {
-        // Convert array to comma-separated string
-        queryParams.append('client_domain', activeFilters.domainFilter.join(','));
-      }
-      
-      // Add date range filters
-      if (activeFilters.dateRange?.[0]) {
-        queryParams.append('startDate', activeFilters.dateRange[0].toISOString());
-      }
-      
-      if (activeFilters.dateRange?.[1]) {
-        queryParams.append('endDate', activeFilters.dateRange[1].toISOString());
-      }
-
-      console.log('Fetching leads with params:', queryParams.toString());
-      
       // Use environment variables for API URL
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const url = `${apiUrl}/api/leads?${queryParams.toString()}`;
-      console.log('API URL:', url);
-      
-      const response = await fetch(url);
-      console.log('Response status:', response.status);
+      const response = await fetch(`${apiUrl}/api/leads?page=1&pageSize=1000`);
       
       if (!response.ok) {
-        let errorMessage = `Failed to fetch leads: ${response.status} ${response.statusText}`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-        } catch (e) {
-          console.error('Could not parse error response:', e);
-        }
-        throw new Error(errorMessage);
+        throw new Error(`Failed to fetch leads: ${response.status} ${response.statusText}`);
       }
       
       const result = await response.json();
-      console.log('Received data:', result);
+      console.log('Loaded all leads:', result);
 
-      // Ensure we have valid data
-      if (!result.data) {
-        console.error('No data property in response:', result);
-        message.error('Invalid data format received from server');
-        return;
+      if (!result.data || !Array.isArray(result.data)) {
+        throw new Error('Invalid response format');
       }
-      
-      // If data is not an array, wrap it in an array
-      const leadData = Array.isArray(result.data) ? result.data : [result.data];
-      console.log('Processed lead data:', leadData);
 
-      setData(leadData);
-      setPagination({
-        ...pagination,
-        total: result.total || leadData.length,
-        current: result.page || pagination.current,
-        pageSize: result.pageSize || pagination.pageSize,
-      });
+      setAllData(result.data);
+      applyFilters(result.data, activeFilters);
     } catch (error) {
-      console.error('Error fetching leads:', error);
-      message.error(`Failed to fetch leads: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('Error loading leads:', error);
+      message.error(typeof error === 'string' ? error : 'Failed to load leads');
     } finally {
       setLoading(false);
     }
   };
 
-  // Expose fetchLeads through the ref with improved safety
+  // Apply filters to the data
+  const applyFilters = (data: Lead[], filters: FilterValues) => {
+    try {
+      // Start with all data
+      let result = [...data];
+      
+      // Search by text (name, email, phone)
+      if (filters.searchText) {
+        const searchLower = filters.searchText.toLowerCase();
+        result = result.filter(lead => 
+          (lead.name && lead.name.toLowerCase().includes(searchLower)) ||
+          (lead.email && lead.email.toLowerCase().includes(searchLower)) ||
+          (lead.phone && lead.phone.toLowerCase().includes(searchLower))
+        );
+      }
+      
+      // Filter by status - handle both string and array types
+      if (filters.statusFilter && 
+          (Array.isArray(filters.statusFilter) ? filters.statusFilter.length > 0 : filters.statusFilter)) {
+        const statusFilters = Array.isArray(filters.statusFilter) 
+          ? filters.statusFilter 
+          : [filters.statusFilter];
+        
+        result = result.filter(lead => lead.status && statusFilters.includes(lead.status));
+      }
+      
+      // Filter by client domain - handle both string and array types
+      if (filters.domainFilter && 
+          (Array.isArray(filters.domainFilter) ? filters.domainFilter.length > 0 : filters.domainFilter)) {
+        const domainFilters = Array.isArray(filters.domainFilter) 
+          ? filters.domainFilter 
+          : [filters.domainFilter];
+        
+        result = result.filter(lead => lead.client_domain && domainFilters.includes(lead.client_domain));
+      }
+      
+      // Filter by date range (last contact date)
+      if (filters.dateRange && filters.dateRange[0] && filters.dateRange[1]) {
+        const startDate = dayjs(filters.dateRange[0]).startOf('day');
+        const endDate = dayjs(filters.dateRange[1]).endOf('day');
+        
+        result = result.filter(lead => {
+          if (!lead.last_contact_date) return false;
+          
+          const contactDate = dayjs(lead.last_contact_date);
+          return contactDate.isAfter(startDate) && contactDate.isBefore(endDate);
+        });
+      }
+      
+      // Update filtered data and pagination
+      setFilteredData(result);
+      setPagination({
+        ...pagination,
+        current: 1, // Reset to first page when filters change
+        total: result.length,
+      });
+    } catch (error) {
+      console.error('Error applying filters:', error);
+      // Don't change the filtered data if there's an error
+    }
+  };
+
+  // Public method to update filters
+  const updateFilters = (newFilters: FilterValues) => {
+    console.log('Updating filters:', newFilters);
+    try {
+      // Create a safe copy of filters with default values for missing properties
+      const safeFilters = {
+        searchText: newFilters.searchText || '',
+        statusFilter: newFilters.statusFilter || [],
+        domainFilter: newFilters.domainFilter || [],
+        dateRange: newFilters.dateRange || null
+      };
+      
+      setActiveFilters(safeFilters);
+      applyFilters(allData, safeFilters);
+    } catch (error) {
+      console.error('Error updating filters:', error);
+    }
+  };
+
+  // Expose fetchLeads through the ref (now just updates filters)
   useImperativeHandle(ref, () => ({
     fetchLeads: (filters?: FilterValues) => {
-      console.log('fetchLeads called via ref with filters:', filters);
+      console.log('fetchLeads called with filters:', filters);
       try {
-        return fetchLeads(filters);
-      } catch (err) {
-        console.error('Error during fetchLeads called from ref:', err);
-        return Promise.resolve(); // Return a resolved promise to avoid unhandled rejections
+        if (filters) {
+          updateFilters(filters);
+        } else {
+          // If no filters provided, refresh data from API
+          return loadAllLeads();
+        }
+      } catch (error) {
+        console.error('Error in fetchLeads:', error);
       }
-    },
+      return Promise.resolve();
+    }
   }), []);
 
   // Load leads when component mounts
   useEffect(() => {
-    console.log('LeadTable mounted, fetching initial data');
-    
-    // Use a flag to track component mount state
-    let isMounted = true;
-    
-    // Delay initial fetch to ensure all components are ready
-    const timer = setTimeout(() => {
-      if (isMounted) {
-        fetchLeads()
-          .then(() => console.log('Initial data fetch completed'))
-          .catch(err => console.error('Error during initial data fetch:', err));
-      }
-    }, 1000); // Increased delay for safety
-    
-    // Expose a global debug function for manual refreshing
-    if (typeof window !== 'undefined') {
-      (window as any).__refreshLeads = () => {
-        console.log('Manual refresh triggered');
-        if (isMounted) {
-          fetchLeads()
-            .then(() => console.log('Manual refresh completed'))
-            .catch(err => console.error('Error during manual refresh:', err));
-        }
-      };
-    }
-    
-    return () => {
-      isMounted = false;
-      clearTimeout(timer);
-      // Clean up
-      if (typeof window !== 'undefined') {
-        delete (window as any).__refreshLeads;
-      }
-    };
+    console.log('LeadTable mounted, loading all leads');
+    loadAllLeads();
   }, []);
 
-  const handleTableChange = (newPagination: any, filters: any, sorter: any) => {
-    fetchLeads(undefined, {
-      page: newPagination.current,
+  const handleTableChange = (newPagination: any) => {
+    setPagination({
+      ...pagination,
+      current: newPagination.current,
       pageSize: newPagination.pageSize,
-      sortField: sorter.field,
-      sortOrder: sorter.order,
-      ...filters,
     });
   };
 
@@ -335,7 +325,7 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
       }
 
       message.success('Lead deleted successfully');
-      fetchLeads(); // Refresh the list
+      loadAllLeads(); // Refresh the list
       setDeleteModalVisible(false);
       setSelectedLead(null);
     } catch (error) {
@@ -344,6 +334,12 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
     } finally {
       setLoading(false);
     }
+  };
+
+  const cellStyle = { 
+    overflow: 'hidden', 
+    textOverflow: 'ellipsis', 
+    whiteSpace: 'nowrap' as const
   };
 
   const columns: ColumnsType<Lead> = [
@@ -371,7 +367,6 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
             maxWidth: '100%',
             display: 'inline-block',
             whiteSpace: 'normal',
-            wordBreak: 'break-word',
             lineHeight: '1.4'
           }}
         >
@@ -409,7 +404,6 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
             maxWidth: '100%',
             display: 'inline-block',
             whiteSpace: 'normal',
-            wordBreak: 'break-word',
             lineHeight: '1.4'
           }}
         >
@@ -436,16 +430,22 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
       dataIndex: 'created_at',
       key: 'created_at',
       width: 150,
-      render: (date: string) => <Text>{dayjs(date).format('DD-MMM-YYYY')}</Text>,
-      sorter: true,
+      render: (date: string) => <Text>{date ? dayjs(date).format('DD-MMM-YYYY') : ''}</Text>,
+      sorter: (a, b) => {
+        if (!a.created_at || !b.created_at) return 0;
+        return dayjs(a.created_at).unix() - dayjs(b.created_at).unix();
+      },
     },
     {
       title: 'Last Contact Date',
       dataIndex: 'last_contact_date',
       key: 'last_contact_date',
       width: 150,
-      render: (date: string) => <Text>{dayjs(date).format('DD-MMM-YYYY')}</Text>,
-      sorter: true,
+      render: (date: string) => <Text>{date ? dayjs(date).format('DD-MMM-YYYY') : ''}</Text>,
+      sorter: (a, b) => {
+        if (!a.last_contact_date || !b.last_contact_date) return 0;
+        return dayjs(a.last_contact_date).unix() - dayjs(b.last_contact_date).unix();
+      },
     },
     {
       title: 'Note',
@@ -512,7 +512,7 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
       >
         <Table<Lead>
           columns={columns}
-          dataSource={data}
+          dataSource={filteredData}
           rowKey="id"
           loading={loading}
           pagination={pagination}

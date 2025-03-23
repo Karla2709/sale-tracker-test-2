@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, Input, Row, Col, Select, DatePicker, Button, Space, Typography, Divider } from 'antd';
 import { SearchOutlined, FilterOutlined, ReloadOutlined, CalendarOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -17,7 +17,6 @@ export interface FilterValues {
 
 interface LeadFilterPanelProps {
   onFilter: (values: FilterValues) => void;
-  onAddNew?: () => void;
 }
 
 const statusOptions = [
@@ -47,51 +46,31 @@ const emptyFilterValues: FilterValues = {
 };
 
 export const LeadFilterPanel: React.FC<LeadFilterPanelProps> = ({ onFilter }) => {
+  // Define simple state variables for each filter
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [domainFilter, setDomainFilter] = useState<string[]>([]);
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Don't apply filters on initial mount - wait until user interaction
-  useEffect(() => {
-    setIsInitialized(true);
-    
-    // Cleanup state on unmount
-    return () => {
-      setIsInitialized(false);
-    };
-  }, []);
-
-  // Safe wrapper for filter application
-  const applyFilter = (filterValues: FilterValues) => {
-    if (!isInitialized) {
-      console.log('Component not initialized yet, skipping filter');
-      return;
-    }
-    
-    console.log('Applying filter:', filterValues);
-    try {
-      if (typeof onFilter === 'function') {
-        onFilter(filterValues);
-      } else {
-        console.warn('Filter function called but not provided by parent', filterValues);
-      }
-    } catch (error) {
-      console.error('Error applying filter:', error);
+  // Helper function to apply all filters
+  const applyFilters = () => {
+    if (typeof onFilter === 'function') {
+      onFilter({
+        searchText,
+        statusFilter,
+        domainFilter,
+        dateRange,
+      });
     }
   };
 
+  // Handle search button click
   const handleSearch = () => {
-    console.log('Search triggered with:', { searchText, statusFilter, domainFilter, dateRange });
-    applyFilter({
-      searchText,
-      statusFilter,
-      domainFilter,
-      dateRange,
-    });
+    console.log('Search triggered:', { searchText, statusFilter, domainFilter, dateRange });
+    applyFilters();
   };
 
+  // Handle reset button click
   const handleReset = () => {
     // Clear all state
     setSearchText('');
@@ -99,18 +78,19 @@ export const LeadFilterPanel: React.FC<LeadFilterPanelProps> = ({ onFilter }) =>
     setDomainFilter([]);
     setDateRange(null);
     
-    // Trigger the filter with reset values
-    console.log('Reset triggered, clearing all filters');
-    applyFilter(emptyFilterValues);
+    // Trigger filter with empty values
+    if (typeof onFilter === 'function') {
+      onFilter(emptyFilterValues);
+    }
   };
 
   // Handler for status filter change
   const handleStatusChange = (value: string[]) => {
     console.log('Status filter changed:', value);
     setStatusFilter(value);
-    // Only apply the filter if the component is fully initialized
-    if (isInitialized) {
-      applyFilter({
+    // Directly apply filter
+    if (typeof onFilter === 'function') {
+      onFilter({
         searchText,
         statusFilter: value,
         domainFilter,
@@ -123,9 +103,9 @@ export const LeadFilterPanel: React.FC<LeadFilterPanelProps> = ({ onFilter }) =>
   const handleDomainChange = (value: string[]) => {
     console.log('Domain filter changed:', value);
     setDomainFilter(value);
-    // Only apply the filter if the component is fully initialized
-    if (isInitialized) {
-      applyFilter({
+    // Directly apply filter
+    if (typeof onFilter === 'function') {
+      onFilter({
         searchText,
         statusFilter,
         domainFilter: value,
@@ -139,16 +119,59 @@ export const LeadFilterPanel: React.FC<LeadFilterPanelProps> = ({ onFilter }) =>
     dates: any, 
     dateStrings: [string, string]
   ) => {
-    const typedDates = dates as [Dayjs, Dayjs] | null;
-    setDateRange(typedDates);
-    // Only apply the filter if the component is fully initialized
-    if (isInitialized) {
-      applyFilter({
-        searchText,
-        statusFilter,
-        domainFilter,
-        dateRange: typedDates,
-      });
+    // Handle null case first
+    if (!dates) {
+      setDateRange(null);
+      if (typeof onFilter === 'function') {
+        onFilter({
+          searchText,
+          statusFilter,
+          domainFilter,
+          dateRange: null,
+        });
+      }
+      return;
+    }
+
+    // Cast to proper type
+    const typedDates = dates as [Dayjs, Dayjs];
+    
+    // Only proceed if we have a valid date range
+    if (typedDates && typedDates[0] && typedDates[1]) {
+      const startDate = typedDates[0];
+      const endDate = typedDates[1];
+      const daysDiff = endDate.diff(startDate, 'day');
+      
+      // Enforce 90-day maximum range if needed
+      if (daysDiff > 90) {
+        const newEndDate = startDate.add(90, 'day');
+        const adjustedRange: [Dayjs, Dayjs] = [startDate, newEndDate];
+        
+        setDateRange(adjustedRange);
+        
+        // Apply filter with corrected date range
+        if (typeof onFilter === 'function') {
+          onFilter({
+            searchText,
+            statusFilter,
+            domainFilter,
+            dateRange: adjustedRange,
+          });
+        }
+      } else {
+        // Normal case - dates are valid
+        setDateRange(typedDates);
+        
+        // Apply filter with selected date range
+        if (typeof onFilter === 'function') {
+          onFilter({
+            searchText,
+            statusFilter,
+            domainFilter,
+            dateRange: typedDates,
+          });
+        }
+      }
     }
   };
 
@@ -242,6 +265,14 @@ export const LeadFilterPanel: React.FC<LeadFilterPanelProps> = ({ onFilter }) =>
               onChange={handleDateRangeChange}
               style={{ width: '100%' }}
               allowClear
+              disabledDate={(current) => {
+                // Prevent selecting dates more than 90 days from the start date
+                if (!dateRange || !dateRange[0]) {
+                  return false;
+                }
+                const startDate = dateRange[0];
+                return current && current.diff(startDate, 'days') > 90;
+              }}
             />
           </Space>
         </Col>

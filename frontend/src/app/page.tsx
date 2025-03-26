@@ -3,7 +3,7 @@
 import React, { useState, useRef } from 'react'
 import { Layout, Typography, message, Button, Space } from 'antd'
 import DashboardLayout from '@/components/layout/DashboardLayout'
-import { LeadTable } from '@/components/leads/LeadTable'
+import { TanStackLeadTable } from '@/components/leads/TanStackLeadTable'
 import { LeadForm } from '@/components/leads/LeadForm'
 import { PlusOutlined, ImportOutlined } from '@ant-design/icons'
 
@@ -74,8 +74,8 @@ const HomePage = () => {
           </Space>
         </div>
 
-        {/* Lead Table */}
-        <LeadTable 
+        {/* TanStack Lead Table */}
+        <TanStackLeadTable 
           ref={leadTableRef} 
         />
         

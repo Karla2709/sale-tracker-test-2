@@ -1,0 +1,125 @@
+/* TanStack Table Custom Styling */
+.tanstack-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.tanstack-table thead tr {
+  background-color: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tanstack-table th {
+  padding: 12px 16px;
+  font-weight: 600;
+  text-align: left;
+  color: #374151;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+}
+
+.tanstack-table tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+  transition: all 0.2s;
+}
+
+.tanstack-table tbody tr:hover {
+  background-color: #f3f4f6;
+}
+
+.tanstack-table td {
+  padding: 12px 16px;
+  vertical-align: middle;
+}
+
+.tanstack-table-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+}
+
+.tanstack-table-pagination-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.expanded-row-content {
+  padding: 20px;
+  background-color: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+}
+
+.detail-section {
+  background-color: white;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  height: 100%;
+}
+
+.detail-item {
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-label {
+  color: #6b7280;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+
+.detail-value {
+  color: #111827;
+  font-size: 0.875rem;
+}
+
+.tanstack-table-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.7);
+  z-index: 10;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .tanstack-table th,
+  .tanstack-table td {
+    padding: 8px;
+  }
+}
+
+.pagination-select {
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #d1d5db;
+  background-color: white;
+  font-size: 0.875rem;
+  outline: none;
+}
+
+.pagination-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+.pagination-info {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+/* Loading state */
+.tanstack-table-container {
+  position: relative;
+  min-height: 200px;
+} 

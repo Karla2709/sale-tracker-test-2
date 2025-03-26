@@ -1,15 +1,14 @@
 "use client";
 
 import React, { useRef } from 'react';
-import { Button, Modal } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { Modal, Button } from 'antd';
+import { PlusOutlined, ImportOutlined } from '@ant-design/icons';
 import { LeadTable } from '@/components/leads/LeadTable';
-import { LeadFilterPanel, FilterValues } from '@/components/leads/LeadFilterPanel';
 import { useCreateLead } from '@/hooks/useCreateLead';
 
 export default function LeadsPage() {
   // Reference to the lead table component
-  const leadTableRef = useRef<{ fetchLeads: (filters?: FilterValues) => void } | null>(null);
+  const leadTableRef = useRef<{ fetchLeads: () => void } | null>(null);
   
   // Create lead modal state and handlers
   const { 
@@ -27,14 +26,6 @@ export default function LeadsPage() {
     }
   });
 
-  // Simple function to handle filter changes - pass directly to the table
-  const handleFilter = (filters: FilterValues) => {
-    console.log('Filter applied:', filters);
-    if (leadTableRef.current) {
-      leadTableRef.current.fetchLeads(filters);
-    }
-  };
-
   const handleAddNew = () => {
     openModal();
   };
@@ -43,22 +34,25 @@ export default function LeadsPage() {
     <main className="px-0" style={{ maxWidth: '100%' }}>
       <div className="mx-6 mb-3 flex justify-between items-center">
         <h1 className="text-2xl font-bold">Lead Management</h1>
-        <Button 
-          type="primary" 
-          icon={<PlusOutlined />} 
-          onClick={handleAddNew}
-          style={{ display: 'flex', alignItems: 'center' }}
-          size="middle"
-        >
-          Add New
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            type="primary"
+            onClick={handleAddNew}
+            icon={<PlusOutlined />}
+          >
+            Add New
+          </Button>
+          <Button
+            type="default"
+            disabled
+            icon={<ImportOutlined />}
+          >
+            Import from n8n
+          </Button>
+        </div>
       </div>
 
-      <div className="mx-6 mb-3">
-        <LeadFilterPanel onFilter={handleFilter} />
-      </div>
-
-      <div className="px-0 w-full">
+      <div className="w-full px-0" style={{ width: '100%', maxWidth: '100vw', overflow: 'visible' }}>
         <LeadTable ref={leadTableRef} onAddNew={handleAddNew} />
       </div>
 

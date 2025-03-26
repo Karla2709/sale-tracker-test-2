@@ -3,8 +3,7 @@ import { Table, Card, message, Dropdown, Button, Modal, Typography, Form } from 
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { Tag } from 'antd';
-import { MoreOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
-import { FilterValues } from './LeadFilterPanel';
+import { MoreOutlined, EditOutlined, DeleteOutlined, DownOutlined, RightOutlined } from '@ant-design/icons';
 import { LeadForm } from './LeadForm';
 
 const { Text } = Typography;
@@ -24,7 +23,7 @@ interface Lead {
 }
 
 interface LeadTableProps {
-  onAddNew: () => void;
+  onAddNew?: () => void;
 }
 
 // Implement the useEditLead functionality directly in this component
@@ -120,22 +119,13 @@ const getDomainColor = (domain: string): string => {
   return colors[domain] || '#D3D3D3';
 };
 
-export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => void }, LeadTableProps>(({ onAddNew }, ref) => {
+export const LeadTable = forwardRef<{ fetchLeads: () => void }, LeadTableProps>(({ onAddNew }, ref) => {
   const [loading, setLoading] = useState(false);
-  const [allData, setAllData] = useState<Lead[]>([]); // Store all data
-  const [filteredData, setFilteredData] = useState<Lead[]>([]); // Store filtered data
+  const [data, setData] = useState<Lead[]>([]); // Store all data
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
     total: 0,
-  });
-  
-  // Store current filters
-  const [activeFilters, setActiveFilters] = useState<FilterValues>({
-    searchText: '',
-    statusFilter: [],
-    domainFilter: [],
-    dateRange: null,
   });
 
   // State for delete modal
@@ -174,8 +164,11 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
         throw new Error('Invalid response format');
       }
 
-      setAllData(result.data);
-      applyFilters(result.data, activeFilters);
+      setData(result.data);
+      setPagination({
+        ...pagination,
+        total: result.data.length,
+      });
     } catch (error) {
       console.error('Error loading leads:', error);
       message.error(typeof error === 'string' ? error : 'Failed to load leads');
@@ -184,102 +177,11 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
     }
   };
 
-  // Apply filters to the data
-  const applyFilters = (data: Lead[], filters: FilterValues) => {
-    try {
-      // Start with all data
-      let result = [...data];
-      
-      // Search by text (name, email, phone)
-      if (filters.searchText) {
-        const searchLower = filters.searchText.toLowerCase();
-        result = result.filter(lead => 
-          (lead.name && lead.name.toLowerCase().includes(searchLower)) ||
-          (lead.email && lead.email.toLowerCase().includes(searchLower)) ||
-          (lead.phone && lead.phone.toLowerCase().includes(searchLower))
-        );
-      }
-      
-      // Filter by status - handle both string and array types
-      if (filters.statusFilter && 
-          (Array.isArray(filters.statusFilter) ? filters.statusFilter.length > 0 : filters.statusFilter)) {
-        const statusFilters = Array.isArray(filters.statusFilter) 
-          ? filters.statusFilter 
-          : [filters.statusFilter];
-        
-        result = result.filter(lead => lead.status && statusFilters.includes(lead.status));
-      }
-      
-      // Filter by client domain - handle both string and array types
-      if (filters.domainFilter && 
-          (Array.isArray(filters.domainFilter) ? filters.domainFilter.length > 0 : filters.domainFilter)) {
-        const domainFilters = Array.isArray(filters.domainFilter) 
-          ? filters.domainFilter 
-          : [filters.domainFilter];
-        
-        result = result.filter(lead => lead.client_domain && domainFilters.includes(lead.client_domain));
-      }
-      
-      // Filter by date range (last contact date)
-      if (filters.dateRange && filters.dateRange[0] && filters.dateRange[1]) {
-        const startDate = dayjs(filters.dateRange[0]).startOf('day');
-        const endDate = dayjs(filters.dateRange[1]).endOf('day');
-        
-        result = result.filter(lead => {
-          if (!lead.last_contact_date) return false;
-          
-          const contactDate = dayjs(lead.last_contact_date);
-          return contactDate.isAfter(startDate) && contactDate.isBefore(endDate);
-        });
-      }
-      
-      // Update filtered data and pagination
-      setFilteredData(result);
-      setPagination({
-        ...pagination,
-        current: 1, // Reset to first page when filters change
-        total: result.length,
-      });
-    } catch (error) {
-      console.error('Error applying filters:', error);
-      // Don't change the filtered data if there's an error
-    }
-  };
-
-  // Public method to update filters
-  const updateFilters = (newFilters: FilterValues) => {
-    console.log('Updating filters:', newFilters);
-    try {
-      // Create a safe copy of filters with default values for missing properties
-      const safeFilters = {
-        searchText: newFilters.searchText || '',
-        statusFilter: newFilters.statusFilter || [],
-        domainFilter: newFilters.domainFilter || [],
-        dateRange: newFilters.dateRange || null
-      };
-      
-      setActiveFilters(safeFilters);
-      applyFilters(allData, safeFilters);
-    } catch (error) {
-      console.error('Error updating filters:', error);
-    }
-  };
-
-  // Expose fetchLeads through the ref (now just updates filters)
+  // Expose fetchLeads through the ref
   useImperativeHandle(ref, () => ({
-    fetchLeads: (filters?: FilterValues) => {
-      console.log('fetchLeads called with filters:', filters);
-      try {
-        if (filters) {
-          updateFilters(filters);
-        } else {
-          // If no filters provided, refresh data from API
-          return loadAllLeads();
-        }
-      } catch (error) {
-        console.error('Error in fetchLeads:', error);
-      }
-      return Promise.resolve();
+    fetchLeads: () => {
+      console.log('fetchLeads called');
+      return loadAllLeads();
     }
   }), []);
 
@@ -336,26 +238,73 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
     }
   };
 
+  // Expandable row render function for detail view
+  const expandedRowRender = (record: Lead) => {
+    return (
+      <div className="lead-detail-expanded bg-gray-50 rounded-md">
+        <div className="lead-detail-text">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="detail-item">
+              <span className="detail-label">Created Date:</span>
+              <span className="detail-value">
+                {record.created_at ? dayjs(record.created_at).format('DD-MMM-YYYY') : 'N/A'}
+              </span>
+            </div>
+            
+            <div className="detail-item">
+              <span className="detail-label">Last Contact Date:</span>
+              <span className="detail-value">
+                {record.last_contact_date ? dayjs(record.last_contact_date).format('DD-MMM-YYYY') : 'N/A'}
+              </span>
+            </div>
+
+            <div className="detail-item">
+              <span className="detail-label">Contact Platform:</span>
+              <span className="detail-value">{record.contact_platform || 'N/A'}</span>
+            </div>
+          </div>
+          
+          {record.note && (
+            <div className="mt-3">
+              <div className="detail-item note-item">
+                <span className="detail-label">Note:</span>
+                <div className="note-content">
+                  {record.note || 'No notes'}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // Custom expand icon
+  const expandIcon = ({ expanded, onExpand, record }: any) => 
+    expanded ? (
+      <DownOutlined onClick={e => onExpand(record, e)} className="text-blue-500 mr-2" />
+    ) : (
+      <RightOutlined onClick={e => onExpand(record, e)} className="text-gray-500 mr-2" />
+    );
+
   const cellStyle = { 
     overflow: 'hidden', 
     textOverflow: 'ellipsis', 
     whiteSpace: 'nowrap' as const
   };
 
+  // Simplified columns for list view
   const columns: ColumnsType<Lead> = [
     {
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
-      fixed: 'left',
-      width: 150,
-      render: (text) => <Text ellipsis={{ tooltip: text }}>{text}</Text>,
+      render: (text) => <Text>{text}</Text>,
     },
     {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      width: 160,
       render: (status: string) => (
         <Tag 
           color={getStatusColor(status)} 
@@ -363,11 +312,7 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
             color: '#333', 
             padding: '2px 8px', 
             borderRadius: '12px', 
-            fontWeight: 500,
-            maxWidth: '100%',
-            display: 'inline-block',
-            whiteSpace: 'normal',
-            lineHeight: '1.4'
+            fontWeight: 500
           }}
         >
           {status}
@@ -375,24 +320,9 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
       ),
     },
     {
-      title: 'Email',
-      dataIndex: 'email',
-      key: 'email',
-      width: 200,
-      render: (text) => <Text ellipsis={{ tooltip: text }}>{text}</Text>,
-    },
-    {
-      title: 'Phone',
-      dataIndex: 'phone',
-      key: 'phone',
-      width: 150,
-      render: (text) => <Text ellipsis={{ tooltip: text }}>{text}</Text>,
-    },
-    {
-      title: 'Client Domain',
+      title: 'Domain',
       dataIndex: 'client_domain',
       key: 'client_domain',
-      width: 160,
       render: (domain: string) => (
         <Tag 
           color={getDomainColor(domain)} 
@@ -400,11 +330,7 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
             color: '#333', 
             padding: '2px 8px', 
             borderRadius: '12px', 
-            fontWeight: 500,
-            maxWidth: '100%',
-            display: 'inline-block',
-            whiteSpace: 'normal',
-            lineHeight: '1.4'
+            fontWeight: 500
           }}
         >
           {domain}
@@ -412,53 +338,26 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
       ),
     },
     {
-      title: 'Contact Platform',
-      dataIndex: 'contact_platform',
-      key: 'contact_platform',
-      width: 150,
-      render: (text) => <Text ellipsis={{ tooltip: text }}>{text}</Text>,
+      title: 'Email',
+      dataIndex: 'email',
+      key: 'email',
+      render: (text) => <Text>{text}</Text>,
+    },
+    {
+      title: 'Phone',
+      dataIndex: 'phone',
+      key: 'phone',
+      render: (text) => <Text>{text}</Text>,
     },
     {
       title: 'Location',
       dataIndex: 'location',
       key: 'location',
-      width: 150,
-      render: (text) => <Text ellipsis={{ tooltip: text }}>{text}</Text>,
-    },
-    {
-      title: 'Created Date',
-      dataIndex: 'created_at',
-      key: 'created_at',
-      width: 150,
-      render: (date: string) => <Text>{date ? dayjs(date).format('DD-MMM-YYYY') : ''}</Text>,
-      sorter: (a, b) => {
-        if (!a.created_at || !b.created_at) return 0;
-        return dayjs(a.created_at).unix() - dayjs(b.created_at).unix();
-      },
-    },
-    {
-      title: 'Last Contact Date',
-      dataIndex: 'last_contact_date',
-      key: 'last_contact_date',
-      width: 150,
-      render: (date: string) => <Text>{date ? dayjs(date).format('DD-MMM-YYYY') : ''}</Text>,
-      sorter: (a, b) => {
-        if (!a.last_contact_date || !b.last_contact_date) return 0;
-        return dayjs(a.last_contact_date).unix() - dayjs(b.last_contact_date).unix();
-      },
-    },
-    {
-      title: 'Note',
-      dataIndex: 'note',
-      key: 'note',
-      width: 300,
-      render: (text) => <Text ellipsis={{ tooltip: text }}>{text}</Text>,
+      render: (text) => <Text>{text}</Text>,
     },
     {
       title: 'Actions',
       key: 'actions',
-      fixed: 'right',
-      width: 70,
       render: (_, record) => (
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           <Dropdown
@@ -505,23 +404,22 @@ export const LeadTable = forwardRef<{ fetchLeads: (filters?: FilterValues) => vo
 
   return (
     <>
-      <Card 
-        className="shadow-sm w-full" 
-        styles={{ body: { padding: '12px 16px' } }}
-        style={{ width: '100%', margin: 0 }}
-      >
+      <Card className="shadow-sm">
         <Table<Lead>
           columns={columns}
-          dataSource={filteredData}
+          dataSource={data}
           rowKey="id"
           loading={loading}
           pagination={pagination}
           onChange={handleTableChange}
-          scroll={{ x: 1800, y: 'calc(100vh - 340px)' }}
+          scroll={{ x: 1200 }}
           size="middle"
           bordered
-          style={{ width: '100%' }}
-          tableLayout="fixed"
+          expandable={{
+            expandedRowRender,
+            expandRowByClick: false,
+            expandIcon: expandIcon,
+          }}
         />
       </Card>
 

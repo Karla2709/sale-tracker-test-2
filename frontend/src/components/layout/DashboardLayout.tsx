@@ -7,7 +7,6 @@ import {
   SettingOutlined,
 } from '@ant-design/icons'
 import Link from 'next/link'
-import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 
 const { Header, Content } = Layout
@@ -40,16 +39,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         <div className="flex items-center h-full">
           <div className="flex items-center">
             <Link href="/" className="flex items-center">
-              <div className="w-10 h-10 relative mr-3">
-                <Image 
-                  src="/images/logo.png" 
-                  alt="Sale Tracker Logo" 
-                  fill 
-                  sizes="(max-width: 40px) 100vw"
-                  className="object-contain"
-                  priority
-                />
-              </div>
               <h1 className="text-xl font-semibold">Sale Tracker</h1>
             </Link>
           </div>

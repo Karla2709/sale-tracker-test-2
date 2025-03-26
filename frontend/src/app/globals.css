@@ -5,19 +5,28 @@
 /* Ant Design + Tailwind CSS Integration */
 :root {
   --foreground-rgb: 0, 0, 0;
-  --background-rgb: 255, 255, 255;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
 }
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-rgb));
+  background: rgb(var(--background-end-rgb));
   margin: 0;
   padding: 0;
 }
 
 /* Override Ant Design styles if needed */
 .ant-layout {
-  background: rgb(var(--background-rgb));
+  background: rgb(var(--background-end-rgb));
 }
 
 /* Custom utility classes */
@@ -65,4 +74,150 @@ html, body {
 /* Override Ant Design defaults for wider display */
 .ant-layout-content {
   padding: 0 !important;
+}
+
+/* Lead table full width override */
+#lead-table {
+  width: 100% !important;
+}
+
+/* Override parent containers */
+#lead-table .ant-table-container,
+#lead-table .ant-table-content,
+#lead-table .ant-table-body,
+#lead-table .ant-table-wrapper {
+  width: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Ensure table matches header width */
+.ant-table-wrapper {
+  width: 100% !important;
+  max-width: none !important;
+  overflow-x: visible !important;
+}
+
+/* Styling for lead detail expanded sections */
+.lead-detail-expanded {
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+.lead-detail-expanded .detail-item {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.lead-detail-descriptions .ant-descriptions-header {
+  margin-bottom: 12px;
+}
+
+.lead-detail-descriptions .ant-descriptions-title {
+  font-size: 15px;
+  color: #1890ff;
+  font-weight: 500;
+}
+
+/* Adjust spacing and colors for detailed info */
+.ant-table-expanded-row > td {
+  background-color: #fafafa !important;
+  padding: 4px 8px !important;
+}
+
+/* Make expand icon more visible */
+.ant-table-row-expand-icon {
+  background: #f5f5f5;
+  border-radius: 50%;
+  transition: all 0.3s;
+}
+
+.ant-table-row-expand-icon:hover {
+  background: #e6f7ff;
+}
+
+/* Detail view text styling */
+.lead-detail-text {
+  font-size: 14px;
+  padding: 12px;
+}
+
+.detail-item {
+  margin-bottom: 0.5rem;
+}
+
+.detail-label {
+  font-weight: 500;
+  color: #666;
+  margin-right: 0.5rem;
+}
+
+.detail-value {
+  color: #333;
+}
+
+.note-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.note-content {
+  line-height: 1.6;
+  color: #333;
+  max-height: 120px;
+  overflow-y: auto;
+  padding: 8px;
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  margin-top: 4px;
+}
+
+.ant-table-row-expand-icon-cell {
+  padding: 0 !important;
+}
+
+/* Set all table cells to have minimal padding */
+.ant-table-cell {
+  padding: 8px 4px !important;
+}
+
+/* Force fixed column widths for our custom table class */
+.fixed-column-widths {
+  table-layout: fixed !important;
+}
+
+.fixed-column-widths th,
+.fixed-column-widths td {
+  max-width: 200px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.fixed-column-widths .ant-table-container {
+  table-layout: fixed !important;
+}
+
+.fixed-column-widths .ant-table-thead th {
+  table-layout: fixed !important;
+}
+
+.table-row-limited-width > td {
+  max-width: 200px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* Added specificity for column groups */
+.fixed-column-widths colgroup col {
+  width: auto !important;
+  max-width: 200px !important;
+}
+
+/* Use direct element selectors to override Ant Design */
+#lead-table table {
+  table-layout: fixed !important;
 } 

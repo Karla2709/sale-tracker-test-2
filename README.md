@@ -1,4 +1,4 @@
-# Sales Tracker MVP (v0.0.1)
+# Sales Tracker MVP (v0.1.0)
 
 A SaaS tool for tracking potential clients in the IT consulting sector, focusing on Container Shipping, Ecommerce, Healthcare and other industries.
 
@@ -9,10 +9,14 @@ A SaaS tool for tracking potential clients in the IT consulting sector, focusing
 - Comprehensive filtering and search capabilities
 - Color-coded status and domain visualization
 - Improved UI/UX with separate search and filter panels
+- Expandable rows with detailed lead information
+- Advanced search with multiple term support
+- Multi-select filters for domains and statuses
+- Pagination for managing large lead datasets
 
 ## Tech Stack
 
-- **Frontend**: Next.js, TypeScript, Ant Design, Tailwind CSS
+- **Frontend**: Next.js, TypeScript, Ant Design, Tailwind CSS, TanStack Table
 - **Backend**: Node.js, Express, TypeScript
 - **Database**: PostgreSQL (via Supabase)
 - **Authentication**: Supabase Auth
@@ -90,13 +94,16 @@ cd frontend && npm run dev
 
 ## Lead Management Features
 
-The application now includes a comprehensive lead management system with the following features:
+The application includes a comprehensive lead management system with the following features:
 
-- **Lead Table**: View, filter, and sort all leads in a single table
+- **TanStack Table**: Modern, responsive table with expandable rows for detailed information
 - **Status Tracking**: Track leads through various stages (New, Reached Out, Meeting Scheduled, etc.)
 - **Color Coding**: Visual indicators for lead status and client domain
-- **Search and Filtering**: Two-line search and filter panel with multi-select filters
-- **Add New Leads**: Form to add new leads with validation
+- **Advanced Search**: Search across name, email, and phone with support for multiple search terms using `/` as separator
+- **Multi-select Filtering**: Filter leads by multiple domains and statuses simultaneously
+- **Expandable Details**: Click on the row expander to view detailed information and notes
+- **Pagination**: Navigate through large datasets with configurable page sizes
+- **CRUD Operations**: Create, read, update, and delete leads with a modern UI
 
 ### Lead Statuses
 
@@ -120,14 +127,19 @@ Leads are categorized into the following domains:
 - Healthcare
 - Others
 
-## UI Improvements (v0.0.1)
+## UI Improvements (v0.1.0)
 
-- Separated search and filter UI into two lines for better organization
-- Added multi-select functionality to status and domain filters
-- Improved status tag colors for better visual distinction
-- Enhanced date range picker with clear label
-- Reorganized action buttons for better usability
-- Mobile-responsive design with appropriate breakpoints
+- Implemented TanStack Table for a modern, responsive data grid
+- Added expandable rows with detailed lead information
+- Enhanced search functionality with multiple term support
+- Integrated multi-select filtering for both domains and statuses
+- Added a dedicated search and filter bar above the table
+- Improved pagination with configurable page sizes
+- Enhanced status and domain tag colors for better visual distinction
+- Optimized padding and spacing for better information density
+- Implemented reset filters functionality
+- Added empty state handling for filtered results
+- Made UI elements fully responsive for all screen sizes
 
 ## API Endpoints
 
@@ -148,6 +160,7 @@ sales-tracker-mvp/
 │   │   ├── config/         # Configuration files
 │   │   ├── routes/         # API routes
 │   │   ├── services/       # Business logic
+│   │   ├── scripts/        # Utility scripts
 │   │   └── index.ts        # Entry point
 │   └── package.json
 │
@@ -156,6 +169,8 @@ sales-tracker-mvp/
 │   ├── src/
 │   │   ├── app/            # Next.js app router
 │   │   ├── components/     # React components
+│   │   │   ├── leads/      # Lead management components
+│   │   │   └── ...         # Other UI components
 │   │   ├── hooks/          # Custom React hooks
 │   │   ├── lib/            # Utility functions
 │   │   └── styles/         # CSS styles
@@ -167,6 +182,20 @@ sales-tracker-mvp/
 │
 └── package.json            # Root package.json for running both services
 ```
+
+## Data Generation
+
+The application includes a script to generate sample data for testing:
+
+```bash
+cd backend && npx ts-node src/scripts/generate-sample-leads.ts [count]
+```
+
+This script will create the specified number of sample leads with realistic data including:
+- Random names, emails, and phone numbers
+- Varied statuses and domains
+- Realistic notes and contact information
+- Randomized creation and last contact dates
 
 ## Troubleshooting
 

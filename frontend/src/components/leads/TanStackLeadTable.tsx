@@ -237,10 +237,10 @@ export const TanStackLeadTable = forwardRef<{ fetchLeads: () => void }, TanStack
   // Expanded row render function
   const renderExpandedRow = (lead: Lead) => {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 px-2">
         <div className="detail-section">
-          <h4 className="font-semibold text-gray-700 mb-2 text-sm uppercase">Contact Details</h4>
-          <div className="grid grid-cols-2 gap-2">
+          <h4 className="font-semibold text-gray-700 mb-3 text-sm uppercase tracking-wider">Contact Details</h4>
+          <div className="grid grid-cols-2 gap-3">
             <div className="detail-item">
               <span className="detail-label">Email:</span>
               <span className="detail-value font-medium">{lead.email || 'N/A'}</span>
@@ -261,8 +261,8 @@ export const TanStackLeadTable = forwardRef<{ fetchLeads: () => void }, TanStack
         </div>
         
         <div className="detail-section">
-          <h4 className="font-semibold text-gray-700 mb-2 text-sm uppercase">Timeline</h4>
-          <div className="grid grid-cols-2 gap-2">
+          <h4 className="font-semibold text-gray-700 mb-3 text-sm uppercase tracking-wider">Timeline</h4>
+          <div className="grid grid-cols-2 gap-3">
             <div className="detail-item">
               <span className="detail-label">Created Date:</span>
               <span className="detail-value font-medium">
@@ -280,8 +280,8 @@ export const TanStackLeadTable = forwardRef<{ fetchLeads: () => void }, TanStack
         
         {lead.note && (
           <div className="col-span-1 md:col-span-2 mt-2">
-            <h4 className="font-semibold text-gray-700 mb-2 text-sm uppercase">Notes</h4>
-            <div className="bg-white p-3 rounded border border-gray-200 text-gray-800">
+            <h4 className="font-semibold text-gray-700 mb-3 text-sm uppercase tracking-wider">Notes</h4>
+            <div className="bg-white p-4 rounded-md border border-gray-200 text-gray-800 shadow-sm">
               {lead.note}
             </div>
           </div>
@@ -297,18 +297,21 @@ export const TanStackLeadTable = forwardRef<{ fetchLeads: () => void }, TanStack
     columnHelper.display({
       id: 'expander',
       header: () => null,
-      cell: ({ row }) => (
-        <button
-          onClick={() => row.toggleExpanded()}
-          className="p-1"
-        >
-          {row.getIsExpanded() ? (
-            <DownOutlined className="text-blue-500" />
-          ) : (
-            <RightOutlined className="text-gray-500" />
-          )}
-        </button>
-      ),
+      cell: ({ row }) => {
+        const isExpanded = row.getIsExpanded();
+        return (
+          <button
+            onClick={() => row.toggleExpanded()}
+            className={`expander-button ${isExpanded ? 'expander-button-expanded' : ''}`}
+          >
+            {isExpanded ? (
+              <DownOutlined className="expander-icon expander-icon-expanded" />
+            ) : (
+              <RightOutlined className="expander-icon" />
+            )}
+          </button>
+        );
+      },
     }),
     columnHelper.accessor('name', {
       header: 'Name',

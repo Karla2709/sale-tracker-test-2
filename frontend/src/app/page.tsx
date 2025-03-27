@@ -51,8 +51,8 @@ const HomePage = () => {
 
   return (
     <DashboardLayout>
-      <div className="content-container">
-        <div className="mb-6 flex justify-between items-center">
+      <div className="content-container p-0">
+        <div className="mb-6 flex justify-between items-center px-6">
           <div>
             <Title level={2}>Lead Management</Title>
             <p className="text-gray-500">Track and manage your leads in one place</p>

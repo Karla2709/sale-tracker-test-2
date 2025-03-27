@@ -7,6 +7,13 @@
   overflow: hidden;
 }
 
+/* Remove card padding */
+.tanstack-card .ant-card-body {
+  padding: 0 !important;
+  margin: 0 auto;
+  max-width: calc(100% - 25px);
+}
+
 .tanstack-table thead tr {
   background-color: #f9fafb;
   border-bottom: 1px solid #e5e7eb;
@@ -36,11 +43,46 @@
   vertical-align: middle;
 }
 
+/* Elegant expander button styling */
+.expander-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.expander-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.expander-button-expanded {
+  background-color: #e6f4ff;
+}
+
+.expander-button-expanded:hover {
+  background-color: #bae0ff;
+}
+
+.expander-icon {
+  font-size: 12px;
+  transition: all 0.3s ease;
+}
+
+.expander-icon-expanded {
+  color: #1890ff;
+}
+
 .tanstack-table-pagination {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 0;
+  padding: 16px;
 }
 
 .tanstack-table-pagination-buttons {
@@ -56,8 +98,8 @@
 
 .detail-section {
   background-color: white;
-  border-radius: 8px;
-  padding: 16px;
+  border-radius: 6px;
+  padding: 12px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   height: 100%;
 }

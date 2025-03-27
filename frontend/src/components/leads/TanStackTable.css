@@ -10,8 +10,6 @@
 /* Remove card padding */
 .tanstack-card .ant-card-body {
   padding: 0 !important;
-  margin: 0 auto;
-  max-width: calc(100% - 25px);
 }
 
 .tanstack-table thead tr {
@@ -27,6 +25,12 @@
   text-transform: uppercase;
   font-size: 0.75rem;
   letter-spacing: 0.05em;
+}
+
+/* Remove padding from specific columns */
+.tanstack-table th.p-0,
+.tanstack-table td.p-0 {
+  padding: 0 !important;
 }
 
 .tanstack-table tbody tr {

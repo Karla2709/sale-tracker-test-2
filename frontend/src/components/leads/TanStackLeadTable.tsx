@@ -317,22 +317,6 @@ export const TanStackLeadTable = forwardRef<{ fetchLeads: () => void }, TanStack
       header: 'Name',
       cell: (info) => <Text>{info.getValue()}</Text>,
     }),
-    columnHelper.accessor('status', {
-      header: 'Status',
-      cell: (info) => (
-        <Tag 
-          color={getStatusColor(info.getValue())} 
-          style={{ 
-            color: '#333', 
-            padding: '2px 8px', 
-            borderRadius: '12px', 
-            fontWeight: 500
-          }}
-        >
-          {info.getValue()}
-        </Tag>
-      ),
-    }),
     columnHelper.accessor('client_domain', {
       header: 'Domain',
       cell: (info) => (
@@ -361,11 +345,27 @@ export const TanStackLeadTable = forwardRef<{ fetchLeads: () => void }, TanStack
       header: 'Location',
       cell: (info) => <Text>{info.getValue()}</Text>,
     }),
+    columnHelper.accessor('status', {
+      header: 'Status',
+      cell: (info) => (
+        <Tag 
+          color={getStatusColor(info.getValue())} 
+          style={{ 
+            color: '#333', 
+            padding: '2px 8px', 
+            borderRadius: '12px', 
+            fontWeight: 500
+          }}
+        >
+          {info.getValue()}
+        </Tag>
+      ),
+    }),
     columnHelper.display({
       id: 'actions',
       header: 'Actions',
       cell: ({ row }) => (
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 0 }}>
           <Dropdown
             menu={{
               items: [
@@ -426,7 +426,7 @@ export const TanStackLeadTable = forwardRef<{ fetchLeads: () => void }, TanStack
 
   return (
     <>
-      <Card className="shadow-sm">
+      <Card className="shadow-sm tanstack-card">
         <div className="tanstack-table-container">
           {loading && (
             <div className="tanstack-table-loading">
@@ -438,7 +438,7 @@ export const TanStackLeadTable = forwardRef<{ fetchLeads: () => void }, TanStack
               {table.getHeaderGroups().map(headerGroup => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map(header => (
-                    <th key={header.id}>
+                    <th key={header.id} className={header.id === 'expander' ? 'p-0' : ''}>
                       {header.isPlaceholder ? null : 
                         flexRender(
                           header.column.columnDef.header,
@@ -455,7 +455,7 @@ export const TanStackLeadTable = forwardRef<{ fetchLeads: () => void }, TanStack
                 <React.Fragment key={row.id}>
                   <tr>
                     {row.getVisibleCells().map(cell => (
-                      <td key={cell.id}>
+                      <td key={cell.id} className={cell.column.id === 'expander' || cell.column.id === 'actions' ? 'p-0' : ''}>
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
                     ))}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { Card, message, Dropdown, Button, Modal, Typography, Form, Tag, Spin } from 'antd';
+import { Card, message, Dropdown, Button, Modal, Typography, Form, Tag, Spin, Input, Select, Row, Col, Space } from 'antd';
 import dayjs from 'dayjs';
-import { MoreOutlined, EditOutlined, DeleteOutlined, DownOutlined, RightOutlined } from '@ant-design/icons';
+import { MoreOutlined, EditOutlined, DeleteOutlined, DownOutlined, RightOutlined, SearchOutlined, FilterOutlined, ReloadOutlined } from '@ant-design/icons';
 import { LeadForm } from './LeadForm';
 import {
   createColumnHelper,
@@ -11,10 +11,13 @@ import {
   getPaginationRowModel,
   getExpandedRowModel,
   ExpandedState,
+  getFilteredRowModel,
+  ColumnFiltersState,
 } from '@tanstack/react-table';
 import './TanStackTable.css';
 
 const { Text } = Typography;
+const { Option } = Select;
 
 interface Lead {
   id: string;
@@ -127,6 +130,25 @@ const getDomainColor = (domain: string): string => {
   return colors[domain] || '#D3D3D3';
 };
 
+// Add an array of available statuses and domains for filter options
+const LEAD_STATUSES = [
+  'New', 
+  'Reached Out', 
+  'Meeting Scheduled', 
+  'First Meeting Complete', 
+  'Second Meeting Completed', 
+  'In Dilligence', 
+  'Close Deal', 
+  'Prospect Decline'
+];
+
+const CLIENT_DOMAINS = [
+  'Container Shipping',
+  'Ecommerce',
+  'Healthcare',
+  'Others'
+];
+
 export const TanStackLeadTable = forwardRef<{ fetchLeads: () => void }, TanStackLeadTableProps>(({ onAddNew }, ref) => {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<Lead[]>([]); // Store all data
@@ -135,6 +157,12 @@ export const TanStackLeadTable = forwardRef<{ fetchLeads: () => void }, TanStack
     pageIndex: 0,
     pageSize: 10,
   });
+
+  // Search and filter states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedDomains, setSelectedDomains] = useState<string[]>([]);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [filteredData, setFilteredData] = useState<Lead[]>([]);
 
   // State for delete modal
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
@@ -408,8 +436,47 @@ export const TanStackLeadTable = forwardRef<{ fetchLeads: () => void }, TanStack
     }),
   ];
 
+  // Apply filters and search
+  useEffect(() => {
+    let result = [...data];
+    
+    // Apply search across name, email, and phone
+    if (searchQuery.trim()) {
+      const searchTerms = searchQuery.split('/').map(term => term.trim().toLowerCase());
+      
+      result = result.filter(lead => {
+        // For each lead, check if any of the search terms match any of the fields
+        return searchTerms.some(term => 
+          lead.name.toLowerCase().includes(term) || 
+          lead.email.toLowerCase().includes(term) || 
+          lead.phone.toLowerCase().includes(term)
+        );
+      });
+    }
+    
+    // Apply domain filter
+    if (selectedDomains.length > 0) {
+      result = result.filter(lead => selectedDomains.includes(lead.client_domain));
+    }
+    
+    // Apply status filter
+    if (selectedStatuses.length > 0) {
+      result = result.filter(lead => selectedStatuses.includes(lead.status));
+    }
+    
+    setFilteredData(result);
+  }, [data, searchQuery, selectedDomains, selectedStatuses]);
+
+  // Reset all filters
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setSelectedDomains([]);
+    setSelectedStatuses([]);
+  };
+
+  // Use filteredData for the table instead of data
   const table = useReactTable({
-    data,
+    data: filteredData,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -426,6 +493,69 @@ export const TanStackLeadTable = forwardRef<{ fetchLeads: () => void }, TanStack
 
   return (
     <>
+      {/* Search and Filter Bar */}
+      <Card className="shadow-sm mb-4">
+        <Row gutter={[16, 16]} align="middle">
+          <Col xs={24} md={8}>
+            <Input
+              placeholder="Search name, email, phone (separate terms with /)"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              prefix={<SearchOutlined />}
+              allowClear
+            />
+          </Col>
+          <Col xs={24} md={6}>
+            <Select
+              mode="multiple"
+              style={{ width: '100%' }}
+              placeholder="Filter by domain"
+              value={selectedDomains}
+              onChange={setSelectedDomains}
+              allowClear
+              maxTagCount="responsive"
+            >
+              {CLIENT_DOMAINS.map(domain => (
+                <Option key={domain} value={domain}>
+                  <Tag color={getDomainColor(domain)} style={{ color: '#333', borderRadius: '12px' }}>
+                    {domain}
+                  </Tag>
+                </Option>
+              ))}
+            </Select>
+          </Col>
+          <Col xs={24} md={6}>
+            <Select
+              mode="multiple"
+              style={{ width: '100%' }}
+              placeholder="Filter by status"
+              value={selectedStatuses}
+              onChange={setSelectedStatuses}
+              allowClear
+              maxTagCount="responsive"
+            >
+              {LEAD_STATUSES.map(status => (
+                <Option key={status} value={status}>
+                  <Tag color={getStatusColor(status)} style={{ color: '#333', borderRadius: '12px' }}>
+                    {status}
+                  </Tag>
+                </Option>
+              ))}
+            </Select>
+          </Col>
+          <Col xs={24} md={4}>
+            <Button 
+              onClick={handleResetFilters}
+              icon={<ReloadOutlined />}
+              style={{ width: '100%' }}
+            >
+              Reset
+            </Button>
+          </Col>
+        </Row>
+      </Card>
+
+      {/* Table Card */}
       <Card className="shadow-sm tanstack-card">
         <div className="tanstack-table-container">
           {loading && (
@@ -473,6 +603,16 @@ export const TanStackLeadTable = forwardRef<{ fetchLeads: () => void }, TanStack
               ))}
             </tbody>
           </table>
+          
+          {/* Show message when no data matches filters */}
+          {filteredData.length === 0 && !loading && (
+            <div className="py-8 text-center">
+              <p className="text-gray-500">No leads match your search criteria.</p>
+              <Button onClick={handleResetFilters} type="link">
+                Reset filters
+              </Button>
+            </div>
+          )}
         </div>
         
         {/* Pagination */}

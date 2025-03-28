@@ -1,4 +1,4 @@
-# Sales Tracker MVP (v0.1.0)
+# Sales Tracker MVP (v0.2.0)
 
 A SaaS tool for tracking potential clients in the IT consulting sector, focusing on Container Shipping, Ecommerce, Healthcare and other industries.
 
@@ -13,13 +13,14 @@ A SaaS tool for tracking potential clients in the IT consulting sector, focusing
 - Advanced search with multiple term support
 - Multi-select filters for domains and statuses
 - Pagination for managing large lead datasets
+- **NEW**: Role-Based Access Control (RBAC) for user permissions
 
 ## Tech Stack
 
 - **Frontend**: Next.js, TypeScript, Ant Design, Tailwind CSS, TanStack Table
 - **Backend**: Node.js, Express, TypeScript
 - **Database**: PostgreSQL (via Supabase)
-- **Authentication**: Supabase Auth
+- **Authentication**: Supabase Auth with RBAC integration
 
 ## Local Development Setup
 
@@ -225,4 +226,88 @@ curl http://localhost:3001/api/health
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Role-Based Access Control (RBAC)
+
+The application now includes a comprehensive role-based access control system that enforces permissions at both the UI and API levels.
+
+### User Roles
+
+- **Viewer**: Can view leads and other data, but cannot add, edit, or delete
+- **Saler**: Has full CRUD (Create, Read, Update, Delete) privileges
+
+### RBAC Implementation
+
+#### Frontend RBAC Controls
+
+- `RBACProvider`: Context provider that manages user roles and permissions
+- `RBACGuard`: Component to conditionally render UI elements based on permissions
+- `useRBAC` hook: React hook to access role information in components
+- Visual indicators for permission status on buttons and actions
+
+#### API Security
+
+- Middleware checks user permissions before allowing API operations
+- Role-specific access control for different HTTP methods:
+  - GET operations require at least a 'viewer' role
+  - POST, PUT, DELETE operations require a 'saler' role
+
+#### User Experience
+
+- Viewers see disabled action buttons with explanatory tooltips
+- Current user role is displayed in the dropdown menu
+- Clear error messages when unauthorized actions are attempted
+
+### Debug Mode
+
+For development and testing purposes, the application includes debug flags to bypass role checks:
+
+- `DEBUG_BYPASS_AUTH`: Bypasses authentication middleware checks
+- `FORCE_SALER_MODE`: Forces saler permissions in the UI
+
+To disable debug mode for production, set these flags to `false` in:
+- `middleware.ts`
+- `RBACGuard.tsx`
+- `dashboard/page.tsx`
+
+## Setting Up User Roles
+
+1. Create user roles in Supabase:
+
+```sql
+-- Create roles table if it doesn't exist
+CREATE TABLE IF NOT EXISTS public.roles (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE
+);
+
+-- Insert default roles
+INSERT INTO public.roles (name) VALUES ('viewer') ON CONFLICT (name) DO NOTHING;
+INSERT INTO public.roles (name) VALUES ('saler') ON CONFLICT (name) DO NOTHING;
+
+-- Create user_roles table to link users to roles
+CREATE TABLE IF NOT EXISTS public.user_roles (
+  id SERIAL PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  role TEXT REFERENCES public.roles(name) ON DELETE CASCADE,
+  UNIQUE(user_id)
+);
+
+-- Add policies for secure access
+ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
+```
+
+2. Assign roles to users:
+
+```sql
+-- Make a user a Viewer
+INSERT INTO public.user_roles (user_id, role) 
+VALUES ('user-uuid-here', 'viewer')
+ON CONFLICT (user_id) DO UPDATE SET role = 'viewer';
+
+-- Make a user a Saler
+INSERT INTO public.user_roles (user_id, role) 
+VALUES ('user-uuid-here', 'saler')
+ON CONFLICT (user_id) DO UPDATE SET role = 'saler';
+``` 

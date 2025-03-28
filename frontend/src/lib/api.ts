@@ -15,7 +15,10 @@ async function fetchAPI<T>(
 ): Promise<T> {
   const url = `${API_URL}${endpoint}`;
   
-  console.log('Fetching from:', url);
+  console.log(`API Request: ${options.method || 'GET'} ${url}`);
+  if (options.body) {
+    console.log('Request body:', options.body);
+  }
   
   try {
     const response = await fetch(url, {
@@ -26,16 +29,38 @@ async function fetchAPI<T>(
       },
     });
 
-    console.log('Response status:', response.status);
+    console.log(`Response status for ${endpoint}:`, response.status);
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'An error occurred while fetching the data.');
+      let errorDetail = '';
+      try {
+        const errorText = await response.text();
+        console.error(`API error response for ${endpoint}:`, errorText);
+        
+        if (errorText) {
+          try {
+            const errorJson = JSON.parse(errorText);
+            errorDetail = errorJson.error || errorJson.message || errorText;
+          } catch (e) {
+            errorDetail = errorText;
+          }
+        }
+      } catch (e) {
+        console.error('Error parsing error response:', e);
+      }
+
+      throw new Error(errorDetail || `API error (${response.status}) for ${endpoint}`);
     }
 
-    return response.json();
+    // Some endpoints might return 204 No Content
+    if (response.status === 204) {
+      return {} as T;
+    }
+
+    const data = await response.json();
+    return data;
   } catch (error) {
-    console.error('API fetch error:', error);
+    console.error(`API fetch error for ${endpoint}:`, error);
     throw error;
   }
 }

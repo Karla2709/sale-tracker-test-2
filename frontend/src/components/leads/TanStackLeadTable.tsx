@@ -3,6 +3,7 @@ import { Card, message, Dropdown, Button, Modal, Typography, Form, Tag, Spin, In
 import dayjs from 'dayjs';
 import { MoreOutlined, EditOutlined, DeleteOutlined, DownOutlined, RightOutlined, SearchOutlined, FilterOutlined, ReloadOutlined } from '@ant-design/icons';
 import { LeadForm } from './LeadForm';
+import api from '@/lib/api'; // Import API client
 import {
   createColumnHelper,
   flexRender,
@@ -35,6 +36,7 @@ interface Lead {
 
 interface TanStackLeadTableProps {
   onAddNew?: () => void;
+  canEditDelete?: boolean;
 }
 
 // Implement the useEditLead functionality directly in this component
@@ -70,26 +72,16 @@ const useEditLead = ({ onSuccess }: { onSuccess?: () => void }) => {
     
     try {
       setLoading(true);
-      // Use environment variables for API URL
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${apiUrl}/api/leads/${currentLead.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(values),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update lead');
-      }
+      console.log('Updating lead:', currentLead.id, values);
+      
+      await api.updateLead(currentLead.id, values);
 
       message.success('Lead updated successfully');
       closeModal();
       if (onSuccess) onSuccess();
     } catch (error) {
       console.error('Error updating lead:', error);
-      message.error('Failed to update lead');
+      message.error('Failed to update lead: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setLoading(false);
     }
@@ -149,7 +141,8 @@ const CLIENT_DOMAINS = [
   'Others'
 ];
 
-export const TanStackLeadTable = forwardRef<{ fetchLeads: () => void }, TanStackLeadTableProps>(({ onAddNew }, ref) => {
+export const TanStackLeadTable = forwardRef<{ fetchLeads: () => void }, TanStackLeadTableProps>(({ onAddNew, canEditDelete = false }, ref) => {
+  console.log('TanStackLeadTable rendering with canEditDelete:', canEditDelete);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<Lead[]>([]); // Store all data
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -184,16 +177,9 @@ export const TanStackLeadTable = forwardRef<{ fetchLeads: () => void }, TanStack
   const loadAllLeads = async () => {
     try {
       setLoading(true);
+      console.log('Fetching leads from API...');
       
-      // Use environment variables for API URL
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${apiUrl}/api/leads?page=1&pageSize=1000`);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch leads: ${response.status} ${response.statusText}`);
-      }
-      
-      const result = await response.json();
+      const result = await api.getLeads() as { data: Lead[] };
       console.log('Loaded all leads:', result);
 
       if (!result.data || !Array.isArray(result.data)) {
@@ -225,11 +211,21 @@ export const TanStackLeadTable = forwardRef<{ fetchLeads: () => void }, TanStack
 
   // Handle edit action
   const handleEdit = (record: Lead) => {
+    console.log('Edit lead clicked, canEditDelete:', canEditDelete);
+    if (!canEditDelete) {
+      message.error('You do not have permission to edit leads');
+      return;
+    }
     openEditModal(record);
   };
 
   // Handle delete action
   const handleDelete = (record: Lead) => {
+    console.log('Delete lead clicked, canEditDelete:', canEditDelete);
+    if (!canEditDelete) {
+      message.error('You do not have permission to delete leads');
+      return;
+    }
     setSelectedLead(record);
     setDeleteModalVisible(true);
   };
@@ -240,23 +236,17 @@ export const TanStackLeadTable = forwardRef<{ fetchLeads: () => void }, TanStack
     
     try {
       setLoading(true);
-      // Use environment variables for API URL
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${apiUrl}/api/leads/${selectedLead.id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete lead');
-      }
-
+      console.log('Deleting lead:', selectedLead.id);
+      
+      await api.deleteLead(selectedLead.id);
+      
       message.success('Lead deleted successfully');
       loadAllLeads(); // Refresh the list
       setDeleteModalVisible(false);
       setSelectedLead(null);
     } catch (error) {
       console.error('Error deleting lead:', error);
-      message.error('Failed to delete lead');
+      message.error('Failed to delete lead: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setLoading(false);
     }
@@ -321,7 +311,7 @@ export const TanStackLeadTable = forwardRef<{ fetchLeads: () => void }, TanStack
   // Column definitions with TanStack
   const columnHelper = createColumnHelper<Lead>();
 
-  const columns = [
+  const columns = React.useMemo(() => [
     columnHelper.display({
       id: 'expander',
       header: () => null,
@@ -391,50 +381,42 @@ export const TanStackLeadTable = forwardRef<{ fetchLeads: () => void }, TanStack
     }),
     columnHelper.display({
       id: 'actions',
-      header: 'Actions',
-      cell: ({ row }) => (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 0 }}>
-          <Dropdown
-            menu={{
-              items: [
-                {
-                  key: 'edit',
-                  label: 'Edit',
-                  icon: <EditOutlined />,
-                  onClick: () => handleEdit(row.original),
-                },
-                {
-                  key: 'delete',
-                  label: 'Delete',
-                  icon: <DeleteOutlined />,
-                  danger: true,
-                  onClick: () => handleDelete(row.original),
-                },
-              ],
-            }}
-            trigger={['click']}
-            placement="bottomRight"
-          >
-            <Button 
-              type="text" 
-              icon={<MoreOutlined />} 
-              className="border-0 shadow-none"
-              style={{ 
-                borderRadius: '50%', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                width: '28px',
-                height: '28px',
-                padding: 0,
-                minWidth: 'auto'
-              }}
-            />
+      header: '',
+      cell: (props) => {
+        const lead = props.row.original;
+        const items = [
+          ...(canEditDelete ? [
+            {
+              key: '1',
+              label: 'Edit',
+              icon: <EditOutlined />,
+              onClick: () => handleEdit(lead),
+            },
+            {
+              key: '2',
+              label: 'Delete',
+              icon: <DeleteOutlined />,
+              onClick: () => handleDelete(lead),
+              danger: true,
+            }
+          ] : [
+            {
+              key: '1',
+              label: 'View Only Mode',
+              disabled: true,
+            }
+          ])
+        ];
+        
+        return (
+          <Dropdown menu={{ items }} placement="bottomRight" disabled={!canEditDelete}>
+            <Button icon={<MoreOutlined />} size="small" disabled={!canEditDelete} />
           </Dropdown>
-        </div>
-      ),
+        );
+      },
+      size: 60,
     }),
-  ];
+  ], [canEditDelete]);
 
   // Apply filters and search
   useEffect(() => {

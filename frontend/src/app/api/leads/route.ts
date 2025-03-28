@@ -7,6 +7,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const queryString = searchParams.toString();
     
+    console.log(`API GET leads request: ${queryString}`);
+    
     const response = await fetch(`${API_BASE_URL}/api/leads?${queryString}`, {
       headers: {
         'Content-Type': 'application/json',
@@ -16,6 +18,7 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
 
     if (!response.ok) {
+      console.error('Error fetching leads:', data);
       return NextResponse.json({ error: data.error || 'Failed to fetch leads' }, { status: response.status });
     }
 
@@ -29,6 +32,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    console.log('API POST leads request with body:', body);
     
     const response = await fetch(`${API_BASE_URL}/api/leads`, {
       method: 'POST',
@@ -38,15 +42,25 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(body),
     });
 
-    const data = await response.json();
-    
+    // If response is not ok, log the error response content
     if (!response.ok) {
-      return NextResponse.json({ error: data.error || 'Failed to create lead' }, { status: response.status });
+      const errorText = await response.text();
+      console.error(`Failed to create lead. Status: ${response.status}, Response:`, errorText);
+      
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch (e) {
+        errorData = { error: errorText || 'Failed to create lead' };
+      }
+      
+      return NextResponse.json(errorData, { status: response.status });
     }
 
+    const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error proxying to leads API:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error', details: String(error) }, { status: 500 });
   }
 } 

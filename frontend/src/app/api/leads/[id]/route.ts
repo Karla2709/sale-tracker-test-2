@@ -8,6 +8,7 @@ export async function GET(
 ) {
   try {
     const { id } = params;
+    console.log(`API GET lead ${id} request`);
     
     const response = await fetch(`${API_BASE_URL}/api/leads/${id}`, {
       headers: {
@@ -18,6 +19,7 @@ export async function GET(
     const data = await response.json();
 
     if (!response.ok) {
+      console.error(`Error fetching lead ${id}:`, data);
       return NextResponse.json({ error: data.error || 'Failed to fetch lead' }, { status: response.status });
     }
 
@@ -35,6 +37,7 @@ export async function PUT(
   try {
     const { id } = params;
     const body = await request.json();
+    console.log(`API PUT lead ${id} request with body:`, body);
     
     const response = await fetch(`${API_BASE_URL}/api/leads/${id}`, {
       method: 'PUT',
@@ -44,16 +47,26 @@ export async function PUT(
       body: JSON.stringify(body),
     });
 
-    const data = await response.json();
-
+    // Handle non-OK responses with better error logging
     if (!response.ok) {
-      return NextResponse.json({ error: data.error || 'Failed to update lead' }, { status: response.status });
+      const errorText = await response.text();
+      console.error(`Failed to update lead ${id}. Status: ${response.status}, Response:`, errorText);
+      
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch (e) {
+        errorData = { error: errorText || 'Failed to update lead' };
+      }
+      
+      return NextResponse.json(errorData, { status: response.status });
     }
 
+    const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error proxying to leads API:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error', details: String(error) }, { status: 500 });
   }
 }
 
@@ -63,6 +76,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = params;
+    console.log(`API DELETE lead ${id} request`);
     
     const response = await fetch(`${API_BASE_URL}/api/leads/${id}`, {
       method: 'DELETE',
@@ -75,8 +89,17 @@ export async function DELETE(
       // If there's a JSON body, extract the error
       let errorMessage = 'Failed to delete lead';
       try {
-        const data = await response.json();
-        errorMessage = data.error || errorMessage;
+        const errorText = await response.text();
+        console.error(`Failed to delete lead ${id}. Status: ${response.status}, Response:`, errorText);
+        
+        if (errorText) {
+          try {
+            const data = JSON.parse(errorText);
+            errorMessage = data.error || errorMessage;
+          } catch (e) {
+            errorMessage = errorText || errorMessage;
+          }
+        }
       } catch (e) {
         // If no JSON body, just use the default error
       }
@@ -88,6 +111,6 @@ export async function DELETE(
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     console.error('Error proxying to leads API:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error', details: String(error) }, { status: 500 });
   }
 } 
